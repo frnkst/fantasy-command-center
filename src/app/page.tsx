@@ -1,6 +1,6 @@
 import {
   Activity,
-  Calendar,
+  BarChartSquare02,
   ChevronRight,
   Clock,
   LogOut01,
@@ -39,57 +39,129 @@ function PlayerRow({ player }: { player: PlayerView }) {
   );
 }
 
-function TeamCard({
-  team,
-  label,
-  paper = false,
-}: {
-  team: TeamView | null;
-  label: string;
-  paper?: boolean;
-}) {
+function LineupDetails({ team, label }: { team: TeamView | null; label: string }) {
   return (
-    <div
-      className={
-        paper
-          ? "paper-noise min-h-full bg-[#f0eee2] p-5 text-[#112019] sm:p-6"
-          : "min-h-full bg-[#0d1d17] p-5 text-white sm:p-6"
-      }
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-score text-[0.65rem] font-bold tracking-[0.16em] opacity-45 uppercase">
+    <details className="group rounded-2xl border border-white/9 bg-[#0d1d17]">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
+        <div className="min-w-0">
+          <p className="font-score text-[0.62rem] font-bold tracking-[0.14em] text-lime-300 uppercase">
             {label}
           </p>
-          <h2 className="font-display mt-2 text-3xl leading-none font-extrabold tracking-tight">
+          <p className="mt-1 truncate text-base font-semibold">
             {team?.teamName ?? "Matchup pending"}
-          </h2>
-          <p className="mt-1 text-xs opacity-45">
-            {team?.ownerName ?? "Sleeper has not assigned an opponent."}
           </p>
         </div>
-        {team ? (
-          <div className="text-right">
-            <span className="font-display text-4xl font-black">
+        <div className="flex items-center gap-3">
+          {team ? (
+            <span className="font-score text-lg font-bold">
               {team.projectedPoints.toFixed(1)}
             </span>
-            <p className="font-score text-[0.58rem] tracking-[0.12em] opacity-40 uppercase">
-              projected
-            </p>
-          </div>
+          ) : null}
+          <ChevronRight
+            className="size-4 text-white/35 transition-transform group-open:rotate-90"
+            aria-hidden="true"
+          />
+        </div>
+      </summary>
+      <div className="border-t border-white/8 px-5 pb-3">
+        {team?.starters.length ? (
+          <ul>
+            {team.starters.map((player) => (
+              <PlayerRow key={player.id} player={player} />
+            ))}
+          </ul>
+        ) : (
+          <p className="py-6 text-sm leading-6 text-white/45">
+            Sleeper has not published this lineup yet.
+          </p>
+        )}
+      </div>
+    </details>
+  );
+}
+
+function MatchupComparison({
+  myTeam,
+  opponent,
+}: {
+  myTeam: TeamView;
+  opponent: TeamView | null;
+}) {
+  const highest = Math.max(
+    myTeam.projectedPoints,
+    opponent?.projectedPoints ?? 0,
+    1,
+  );
+  const margin = opponent
+    ? myTeam.projectedPoints - opponent.projectedPoints
+    : null;
+
+  const rows = [
+    { team: myTeam, label: "You", accent: true },
+    { team: opponent, label: "Opponent", accent: false },
+  ];
+
+  return (
+    <div className="px-5 py-6 sm:px-7 sm:py-7">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <div>
+          <p className="font-score text-[0.65rem] font-bold tracking-[0.15em] text-lime-300 uppercase">
+            Projected score
+          </p>
+          <h2 className="font-display mt-1 text-3xl font-extrabold">
+            Matchup at a glance
+          </h2>
+        </div>
+        {margin !== null ? (
+          <Badge tone={margin >= 0 ? "positive" : "warning"}>
+            {margin >= 0 ? "+" : ""}
+            {margin.toFixed(1)} margin
+          </Badge>
         ) : null}
       </div>
-      {team?.starters.length ? (
-        <ul className="mt-6">
-          {team.starters.map((player) => (
-            <PlayerRow key={player.id} player={player} />
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-12 max-w-xs text-sm leading-6 opacity-50">
-          Lineups will appear when Sleeper publishes this week&apos;s matchup.
-        </p>
-      )}
+
+      <div className="space-y-5">
+        {rows.map(({ team, label, accent }) => (
+          <div key={label}>
+            <div className="mb-2 flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-score text-[0.6rem] tracking-[0.13em] text-white/35 uppercase">
+                  {label}
+                </p>
+                <p className="truncate text-sm font-semibold sm:text-base">
+                  {team?.teamName ?? "Not assigned"}
+                </p>
+              </div>
+              <span
+                className={
+                  accent
+                    ? "font-display text-4xl font-black text-lime-300"
+                    : "font-display text-4xl font-black text-white/75"
+                }
+              >
+                {team?.projectedPoints.toFixed(1) ?? "—"}
+              </span>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-white/7">
+              <div
+                className={
+                  accent
+                    ? "h-full rounded-full bg-lime-300"
+                    : "h-full rounded-full bg-white/45"
+                }
+                style={{
+                  width: team
+                    ? `${Math.max(4, (team.projectedPoints / highest) * 100)}%`
+                    : "0%",
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-5 text-xs leading-5 text-white/35">
+        Baseline projection before applying any recommended lineup changes.
+      </p>
     </div>
   );
 }
@@ -180,7 +252,7 @@ export default async function Home() {
           <Panel className="yard-lines mt-6 overflow-hidden">
             <div className="flex items-center justify-between border-b border-white/8 px-5 py-3">
               <span className="flex items-center gap-2 font-score text-[0.65rem] tracking-[0.14em] text-white/38 uppercase">
-                <Calendar className="size-3.5" aria-hidden="true" />
+                <BarChartSquare02 className="size-3.5" aria-hidden="true" />
                 Matchup board
               </span>
               <span className="flex items-center gap-1 text-xs text-white/35">
@@ -188,14 +260,27 @@ export default async function Home() {
                 <ChevronRight className="size-3.5" aria-hidden="true" />
               </span>
             </div>
-            <div className="grid gap-px bg-white/9 lg:grid-cols-2">
-              <TeamCard team={view.myTeam} label="Your side" />
-              <TeamCard team={view.opponent} label="Opponent" paper />
-            </div>
+            <MatchupComparison myTeam={view.myTeam} opponent={view.opponent} />
           </Panel>
         </section>
 
         <RecommendationWorkspace dashboard={view} />
+
+        <section className="mt-6" aria-labelledby="lineup-details-title">
+          <div className="mb-3 flex items-center justify-between">
+            <h2
+              id="lineup-details-title"
+              className="font-score text-xs font-bold tracking-[0.14em] text-white/45 uppercase"
+            >
+              Current lineup details
+            </h2>
+            <span className="text-xs text-white/25">Tap to expand</span>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            <LineupDetails team={view.myTeam} label="Your starters" />
+            <LineupDetails team={view.opponent} label="Opponent starters" />
+          </div>
+        </section>
 
         <footer className="flex flex-col gap-2 py-8 text-xs leading-5 text-white/28 sm:flex-row sm:items-center sm:justify-between">
           <p>

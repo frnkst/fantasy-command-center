@@ -99,6 +99,61 @@ function PlayerLine({
   );
 }
 
+function PlayerComparison({
+  primary,
+  secondary,
+  primaryLabel,
+  secondaryLabel,
+}: {
+  primary: PlayerView;
+  secondary: PlayerView;
+  primaryLabel: string;
+  secondaryLabel: string;
+}) {
+  const maximum = Math.max(
+    primary.projectedPoints,
+    secondary.projectedPoints,
+    1,
+  );
+
+  return (
+    <div className="space-y-4">
+      {[
+        { player: primary, label: primaryLabel, positive: true },
+        { player: secondary, label: secondaryLabel, positive: false },
+      ].map(({ player, label, positive }) => (
+        <div key={`${label}:${player.id}`}>
+          <p
+            className={
+              positive
+                ? "font-score mb-2 text-[0.62rem] font-bold tracking-[0.14em] text-lime-300 uppercase"
+                : "font-score mb-2 text-[0.62rem] font-bold tracking-[0.14em] text-white/32 uppercase"
+            }
+          >
+            {label}
+          </p>
+          <PlayerLine
+            player={player}
+            direction={positive ? "up" : "down"}
+          />
+          <div className="mt-2 ml-11 h-1.5 overflow-hidden rounded-full bg-white/7">
+            <div
+              className={
+                positive
+                  ? "h-full rounded-full bg-lime-300"
+                  : "h-full rounded-full bg-white/30"
+              }
+              style={{
+                width: `${Math.max(4, (player.projectedPoints / maximum) * 100)}%`,
+              }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function EmptyAdvice({ children }: { children: string }) {
   return (
     <div className="rounded-xl border border-dashed border-white/12 px-4 py-7 text-center text-sm text-white/42">
@@ -300,17 +355,18 @@ export function RecommendationWorkspace({
                         >
                           <div className="mb-3 flex items-center justify-between gap-3">
                             <span className="font-score text-[0.62rem] font-bold tracking-[0.14em] text-lime-300 uppercase">
-                              Start this week
+                              Lineup change
                             </span>
                             <Badge tone="positive">
                               +{candidate.projectedGain.toFixed(1)} pts
                             </Badge>
                           </div>
-                          <PlayerLine player={candidate.start} direction="up" />
-                          <p className="font-score mt-4 mb-2 text-[0.62rem] font-bold tracking-[0.14em] text-white/32 uppercase">
-                            Move to bench
-                          </p>
-                          <PlayerLine player={candidate.sit} direction="down" />
+                          <PlayerComparison
+                            primary={candidate.start}
+                            secondary={candidate.sit}
+                            primaryLabel="Start this week"
+                            secondaryLabel="Move to bench"
+                          />
                           <RecommendationMeta advice={item} />
                         </article>
                       );
@@ -340,17 +396,18 @@ export function RecommendationWorkspace({
                         >
                           <div className="mb-3 flex items-center justify-between gap-3">
                             <span className="font-score text-[0.62rem] font-bold tracking-[0.14em] text-lime-300 uppercase">
-                              Add from waivers
+                              Roster move
                             </span>
                             <Badge tone="positive">
                               +{candidate.projectedGain.toFixed(1)} pts
                             </Badge>
                           </div>
-                          <PlayerLine player={candidate.add} direction="up" />
-                          <p className="font-score mt-4 mb-2 text-[0.62rem] font-bold tracking-[0.14em] text-white/32 uppercase">
-                            Drop
-                          </p>
-                          <PlayerLine player={candidate.drop} direction="down" />
+                          <PlayerComparison
+                            primary={candidate.add}
+                            secondary={candidate.drop}
+                            primaryLabel="Add from waivers"
+                            secondaryLabel="Drop"
+                          />
                           <RecommendationMeta advice={item} />
                         </article>
                       );
@@ -380,17 +437,18 @@ export function RecommendationWorkspace({
                         >
                           <div className="mb-3 flex items-center justify-between gap-3">
                             <span className="font-score text-[0.62rem] font-bold tracking-[0.14em] text-lime-300 uppercase">
-                              Receive
+                              Trade proposal
                             </span>
                             <span className="text-xs text-white/40">
                               from {candidate.partnerName}
                             </span>
                           </div>
-                          <PlayerLine player={candidate.receive} direction="up" />
-                          <p className="font-score mt-4 mb-2 text-[0.62rem] font-bold tracking-[0.14em] text-white/32 uppercase">
-                            Send
-                          </p>
-                          <PlayerLine player={candidate.give} direction="down" />
+                          <PlayerComparison
+                            primary={candidate.receive}
+                            secondary={candidate.give}
+                            primaryLabel="Receive"
+                            secondaryLabel="Send"
+                          />
                           <RecommendationMeta advice={item} />
                         </article>
                       );
