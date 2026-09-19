@@ -11,6 +11,11 @@ const environmentSchema = z.object({
   OPENROUTER_MODEL: z.string().trim().min(1).default("google/gemini-2.5-flash-lite"),
 });
 
+const telegramEnvironmentSchema = z.object({
+  TELEGRAM_BOT_TOKEN: z.string().trim().min(1),
+  TELEGRAM_CHAT_ID: z.string().trim().min(1),
+});
+
 export type AppConfig = {
   appUrl: string;
   dashboardPassword: string;
@@ -20,7 +25,13 @@ export type AppConfig = {
   openRouterModel: string;
 };
 
+export type TelegramConfig = {
+  botToken: string;
+  chatId: string;
+};
+
 let cachedConfig: AppConfig | undefined;
+let cachedTelegramConfig: TelegramConfig | undefined;
 
 export function getAppConfig(): AppConfig {
   if (cachedConfig) {
@@ -47,6 +58,27 @@ export function getAppConfig(): AppConfig {
   return cachedConfig;
 }
 
+export function getTelegramConfig(): TelegramConfig {
+  if (cachedTelegramConfig) {
+    return cachedTelegramConfig;
+  }
+
+  const parsed = telegramEnvironmentSchema.safeParse(process.env);
+  if (!parsed.success) {
+    const details = parsed.error.issues
+      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+      .join("; ");
+    throw new Error(`Invalid Telegram environment: ${details}`);
+  }
+
+  cachedTelegramConfig = {
+    botToken: parsed.data.TELEGRAM_BOT_TOKEN,
+    chatId: parsed.data.TELEGRAM_CHAT_ID,
+  };
+  return cachedTelegramConfig;
+}
+
 export function resetConfigForTests() {
   cachedConfig = undefined;
+  cachedTelegramConfig = undefined;
 }

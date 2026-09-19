@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getAppConfig } from "@/lib/config";
 import {
   assertGroundedRecommendations,
+  limitRecommendations,
   type RecommendationPromptInput,
   type RecommendationResponse,
   recommendationResponseSchema,
@@ -101,5 +102,5 @@ export async function generateRecommendations(
   }
 
   const response = recommendationResponseSchema.parse(raw);
-  return assertGroundedRecommendations(response, input);
+  return limitRecommendations(assertGroundedRecommendations(response, input));
 }

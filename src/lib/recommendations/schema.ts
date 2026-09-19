@@ -62,3 +62,33 @@ export function assertGroundedRecommendations(
 
   return response;
 }
+
+export function limitRecommendations(
+  response: RecommendationResponse,
+  limit = 5,
+): RecommendationResponse {
+  const ranked = (
+    ["lineup", "waivers", "trades"] as const
+  ).flatMap((category) =>
+    response[category].map((item) => ({ category, item })),
+  )
+    .sort(
+      (a, b) =>
+        a.item.priority - b.item.priority ||
+        b.item.confidence - a.item.confidence,
+    )
+    .slice(0, Math.max(0, limit));
+
+  return {
+    ...response,
+    lineup: ranked
+      .filter(({ category }) => category === "lineup")
+      .map(({ item }) => item),
+    waivers: ranked
+      .filter(({ category }) => category === "waivers")
+      .map(({ item }) => item),
+    trades: ranked
+      .filter(({ category }) => category === "trades")
+      .map(({ item }) => item),
+  };
+}

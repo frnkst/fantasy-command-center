@@ -46,6 +46,9 @@ transaction.
    SLEEPER_LEAGUE_ID=123456789012345678
    OPENROUTER_API_KEY=your-openrouter-api-key
    OPENROUTER_MODEL=google/gemini-2.5-flash-lite
+   TELEGRAM_BOT_TOKEN=123456789:replace-with-your-bot-token
+   TELEGRAM_CHAT_ID=@your-channel-name
+   CRON_SECRET=replace-with-a-long-random-cron-secret
    ```
 
    Use a unique, randomly generated value of at least 12 characters for
@@ -142,6 +145,36 @@ The request:
 
 Review the selected model's current token pricing in the OpenRouter catalog
 before deployment.
+
+## Daily Telegram briefing
+
+The repository includes a scheduled workflow that requests a protected server
+route every day at 08:00 in `Europe/Zurich`. It invokes both possible UTC
+offsets and skips the inactive offset, so the delivery time follows Swiss
+daylight-saving changes.
+
+The server sends two Telegram messages in order:
+
+1. **The analyst's read**
+2. **Next best moves**, globally ranked and limited to five
+
+To enable delivery:
+
+1. Create a bot with Telegram's BotFather.
+2. Add the bot to the target channel as an administrator with permission to
+   post messages.
+3. Add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` to the Vercel Production
+   environment. A public channel username such as `@my_fantasy_channel` can be
+   used as the chat ID; private channels generally use a numeric ID.
+4. Set a single random value of at least 16 characters as both:
+   - the Vercel Production environment variable `CRON_SECRET`;
+   - the GitHub Actions repository secret `DAILY_BRIEFING_SECRET`.
+5. Redeploy after adding or changing Vercel environment variables.
+
+The GitHub Actions workflow can be run manually from the Actions tab to test
+delivery immediately. Manual runs use the same protected route but bypass the
+08:00 time guard. The Telegram credentials and cron secret are server-only and
+are never included in the dashboard bundle.
 
 ## Deploy to Vercel
 

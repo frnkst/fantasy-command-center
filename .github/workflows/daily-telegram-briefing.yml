@@ -1,0 +1,33 @@
+name: Daily Telegram briefing
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send-briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Zurich morning briefing
+        env:
+          BRIEFING_SECRET: ${{ secrets.DAILY_BRIEFING_SECRET }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" != "workflow_dispatch" ] && [ "$(TZ=Europe/Zurich date +%H)" != "08" ]; then
+            echo "Skipping the inactive UTC offset."
+            exit 0
+          fi
+
+          endpoint="https://fantasy.void0.ch/api/cron/daily-briefing"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            endpoint="$endpoint?force=1"
+          fi
+
+          curl --fail --show-error --silent \
+            --header "Authorization: Bearer $BRIEFING_SECRET" \
+            "$endpoint"

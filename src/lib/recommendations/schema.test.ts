@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   assertGroundedRecommendations,
+  limitRecommendations,
   type RecommendationPromptInput,
   recommendationResponseSchema,
 } from "@/lib/recommendations/schema";
@@ -76,5 +77,33 @@ describe("recommendation grounding", () => {
         input,
       ),
     ).toThrow(/unknown lineup candidate/);
+  });
+
+  it("keeps only the five highest-ranked recommendations across categories", () => {
+    const item = response.lineup[0];
+    const limited = limitRecommendations({
+      ...response,
+      lineup: [
+        { ...item, candidateId: "lineup:3", priority: 3 },
+        { ...item, candidateId: "lineup:1", priority: 1 },
+      ],
+      waivers: [
+        { ...item, candidateId: "waiver:6", priority: 5, confidence: 40 },
+        { ...item, candidateId: "waiver:2", priority: 2 },
+      ],
+      trades: [
+        { ...item, candidateId: "trade:5", priority: 5, confidence: 80 },
+        { ...item, candidateId: "trade:4", priority: 4 },
+      ],
+    });
+
+    expect(
+      [...limited.lineup, ...limited.waivers, ...limited.trades].map(
+        ({ candidateId }) => candidateId,
+      ),
+    ).not.toContain("waiver:6");
+    expect(
+      limited.lineup.length + limited.waivers.length + limited.trades.length,
+    ).toBe(5);
   });
 });
