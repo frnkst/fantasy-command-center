@@ -241,6 +241,9 @@ export default async function Home() {
   const injuryCount = view.myTeam.starters.filter(
     (player) => player.injuryStatus,
   ).length;
+  const bestLineupMove = [...view.candidates.lineup].sort(
+    (a, b) => b.projectedGain - a.projectedGain,
+  )[0];
   const outlook =
     margin === null
       ? "Prepare for the week ahead."
@@ -249,10 +252,25 @@ export default async function Home() {
         : margin <= -5
           ? "Find an edge before kickoff."
           : "A close week will reward small decisions.";
-  const briefing =
-    moveCount > 0
-      ? `${moveCount} grounded opportunities are ready to review across your lineup, waivers, and trade market.`
-      : "Your current roster construction looks sound. Monitor late injury news before kickoff.";
+  const actionSignal = bestLineupMove
+    ? {
+        title:
+          bestLineupMove.projectedGain >= 3
+            ? "One high-impact lineup change is ready."
+            : "A lineup improvement is worth reviewing.",
+        detail: `Start ${bestLineupMove.start.name} over ${bestLineupMove.sit.name} for a projected ${bestLineupMove.projectedGain.toFixed(1)}-point gain.`,
+      }
+    : injuryCount
+      ? {
+          title: `${injuryCount} starter${injuryCount === 1 ? "" : "s"} require injury monitoring.`,
+          detail:
+            "No projected lineup upgrade is available yet. Recheck player status before kickoff.",
+        }
+      : {
+          title: "No high-urgency lineup action at the moment.",
+          detail:
+            "Your current starters match the highest-projected legal lineup. Generate the dashboard to review waivers and trades.",
+        };
 
   return (
     <main className="relative min-h-dvh overflow-hidden bg-[#f2efe7] text-[#17202a]">
@@ -310,14 +328,17 @@ export default async function Home() {
                   {outlook}
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-7 text-white/67 sm:text-lg">
-                  {briefing}
+                  {actionSignal.title}
                 </p>
+                <div className="mt-5 max-w-2xl border-l-2 border-[#829cff] pl-4 text-sm leading-6 text-white/55">
+                  {actionSignal.detail}
+                </div>
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <a
                     href="#decisions"
                     className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-extrabold text-[#17202a] transition hover:-translate-y-0.5 hover:bg-[#eef1ff]"
                   >
-                    Review the game plan
+                    Review opportunities
                     <ChevronRight className="size-4" aria-hidden="true" />
                   </a>
                   <span className="text-xs text-white/45">

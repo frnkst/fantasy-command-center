@@ -492,18 +492,18 @@ export function RecommendationWorkspace({
             those grounded candidates, including the evidence against each move.
           </p>
         </div>
-        <Button onClick={generate} disabled={status === "loading"}>
-          {status === "loading" ? (
-            <RefreshCw01 className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <MagicWand02 className="size-4" aria-hidden="true" />
-          )}
-          {status === "loading"
-            ? "Reviewing evidence…"
-            : cached
-              ? "Refresh game plan"
-              : "Build my game plan"}
-        </Button>
+        {cached ? (
+          <Button onClick={generate} disabled={status === "loading"}>
+            {status === "loading" ? (
+              <RefreshCw01 className="size-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <MagicWand02 className="size-4" aria-hidden="true" />
+            )}
+            {status === "loading"
+              ? "Generating dashboard…"
+              : "Generate dashboard"}
+          </Button>
+        ) : null}
       </div>
 
       {error ? (
@@ -592,6 +592,41 @@ export function RecommendationWorkspace({
         </div>
       ) : (
         <Panel className="overflow-hidden">
+          <div className="relative overflow-hidden border-b border-[#d9d5cb] px-5 py-10 text-center sm:px-8 sm:py-14">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(40,85,217,0.13),transparent_48%)]" />
+            <div className="relative mx-auto max-w-xl">
+              <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#e8edff] text-[#2855d9]">
+                <Stars02 className="size-5" aria-hidden="true" />
+              </span>
+              <h3 className="font-display mt-5 text-3xl font-semibold tracking-[-0.025em] sm:text-4xl">
+                Turn this week&apos;s data into a clear plan.
+              </h3>
+              <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[#65707a]">
+                Review the strongest lineup, waiver, and trade opportunities
+                together—ranked by expected impact, confidence, and urgency.
+              </p>
+              <Button
+                onClick={generate}
+                disabled={status === "loading"}
+                className="mt-6 min-w-52"
+              >
+                {status === "loading" ? (
+                  <RefreshCw01
+                    className="size-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <MagicWand02 className="size-4" aria-hidden="true" />
+                )}
+                {status === "loading"
+                  ? "Generating dashboard…"
+                  : "Generate dashboard"}
+              </Button>
+              <p className="mt-3 text-xs text-[#7b848d]">
+                This also sends the briefing to Telegram when configured.
+              </p>
+            </div>
+          </div>
           <div className="grid gap-px bg-[#d9d5cb] sm:grid-cols-3">
             {candidateCounts.map(({ label, detail, icon: Icon }) => (
               <div key={label} className="bg-[#fffdf8] p-5 sm:p-6">
@@ -605,7 +640,7 @@ export function RecommendationWorkspace({
           </div>
           <div className="flex flex-col gap-3 border-t border-[#d9d5cb] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <p className="text-xs text-[#707a84]">
-              Generate only when you want an updated evidence review.
+              Evidence available for this dashboard
             </p>
             <div className="flex flex-wrap gap-2">
               {dashboard.dataSources.map((source) => (
