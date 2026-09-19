@@ -1,217 +1,146 @@
 # Fantasy Command Center
 
-A private NFL fantasy dashboard for Sleeper. It reads a configured league,
-finds legal lineup, waiver, and one-for-one trade candidates, then uses
-OpenRouter to rank and explain those grounded options.
+Fantasy Command Center is a private decision assistant for your Sleeper NFL
+fantasy league. It turns your current matchup, roster, league rules,
+projections, recent performance, injuries, and player trends into a focused
+weekly game plan.
 
-The app is read-only. It never changes a Sleeper lineup or submits a
-transaction.
+Instead of asking you to compare dozens of players and screens, it answers:
 
-## Stack
+- How does my matchup look this week?
+- Is my current starting lineup the best available option?
+- Which waiver move would actually improve my roster?
+- Is there a trade that could help both managers?
+- What should I do first, and what is the risk?
 
-- Next.js 16, React 19, TypeScript, and Tailwind CSS 4
-- Open-source [Untitled UI React](https://github.com/untitleduico/react)
-  patterns and `@untitledui/icons`
-- Master-password authentication with a signed, HttpOnly session cookie
-- Sleeper's public NFL API and undocumented weekly projections endpoint
-- OpenRouter's usage-based API with a configurable model
+The dashboard is read-only. It never changes your Sleeper lineup, adds or drops
+a player, or submits a trade.
 
-## Requirements
+## What you get
 
-- Node.js 22 or newer
-- npm
-- An OpenRouter account with API credits
-- A Sleeper username and league ID
+### A weekly briefing
 
-## Local setup
+The opening dashboard summarizes your matchup, projected advantage or deficit,
+lineup readiness, injury concerns, and the number of opportunities worth
+reviewing.
 
-1. Install dependencies:
+### Five prioritized moves
+
+The decision desk ranks the best lineup, waiver, and trade options together and
+shows no more than five. Each recommendation includes:
+
+- the move to make;
+- its projected point impact;
+- a confidence level;
+- the evidence supporting it;
+- the main reason it could go wrong.
+
+Players stored in your Sleeper injury-reserve slot are protected. The dashboard
+will not recommend dropping an IR stash just because a healthy free agent has a
+better current-week projection.
+
+### Advice based on your league
+
+Recommendations use your actual scoring rules, roster positions, current
+starters, available players, opponent, recent scoring, injuries, and Sleeper
+add/drop activity. This makes the advice specific to your team rather than a
+generic player ranking.
+
+### Telegram briefings
+
+The same game plan can be delivered to a Telegram channel:
+
+- automatically every day at 08:00 in the `Europe/Zurich` timezone;
+- immediately whenever you generate or refresh the game plan in the dashboard.
+
+Telegram receives two messages: **The analyst's read** followed by the five
+**Next best moves**.
+
+## Configuration options
+
+Create `.env.local` for local use or add these values to the Production
+environment in Vercel.
+
+| Option | Required | What it controls |
+| --- | --- | --- |
+| `APP_URL` | Yes | The public address of the dashboard, such as `https://fantasy.example.com`. |
+| `DASHBOARD_PASSWORD` | Yes | The private password used to open the dashboard. Use a unique value of at least 12 characters. |
+| `SLEEPER_USERNAME` | Yes | The Sleeper account whose roster should be analyzed. |
+| `SLEEPER_LEAGUE_ID` | Yes | The league to analyze. The numeric ID can be copied from the Sleeper league URL. |
+| `OPENROUTER_API_KEY` | Yes | Authorizes the AI-generated briefing and recommendation explanations. |
+| `OPENROUTER_MODEL` | Yes | Selects the OpenRouter model. A fast, economical model is usually sufficient. |
+| `TELEGRAM_BOT_TOKEN` | For Telegram | The token issued by Telegram's BotFather. |
+| `TELEGRAM_CHAT_ID` | For Telegram | The destination channel username, such as `@my_fantasy_channel`, or its numeric private-channel ID. |
+| `CRON_SECRET` | For scheduled Telegram updates | Protects the daily briefing endpoint. Use the same value for the GitHub repository secret `DAILY_BRIEFING_SECRET`. |
+
+An example configuration is available in [`.env.example`](./.env.example).
+
+## Getting started
+
+1. Install the project:
 
    ```bash
    npm install
    ```
 
-2. Copy the example environment:
+2. Copy the example configuration:
 
    ```bash
    cp .env.example .env.local
    ```
 
-3. Replace every placeholder in `.env.local`:
+3. Fill in your Sleeper, dashboard, and OpenRouter settings.
 
-   ```dotenv
-   APP_URL=http://localhost:3000
-   DASHBOARD_PASSWORD=replace-with-a-long-random-master-password
-   SLEEPER_USERNAME=your-sleeper-username
-   SLEEPER_LEAGUE_ID=123456789012345678
-   OPENROUTER_API_KEY=your-openrouter-api-key
-   OPENROUTER_MODEL=google/gemini-2.5-flash-lite
-   TELEGRAM_BOT_TOKEN=123456789:replace-with-your-bot-token
-   TELEGRAM_CHAT_ID=@your-channel-name
-   CRON_SECRET=replace-with-a-long-random-cron-secret
-   ```
-
-   Use a unique, randomly generated value of at least 12 characters for
-   `DASHBOARD_PASSWORD`.
-
-4. Start the app:
+4. Start the dashboard:
 
    ```bash
    npm run dev
    ```
 
-5. Open <http://localhost:3000>.
+5. Open <http://localhost:3000>, sign in, and generate your first game plan.
 
-## Password authentication
+## Setting up Telegram
 
-The login form compares the submitted password with `DASHBOARD_PASSWORD` on the
-server using a timing-safe digest comparison. A successful login receives a
-signed session cookie with these properties:
+1. Create a bot with Telegram's **BotFather** and copy its token.
+2. Add the bot to your target channel as an administrator with permission to
+   publish messages.
+3. For a public channel, use its username as the chat ID, for example
+   `@my_fantasy_channel`.
+4. For a private channel, publish a new channel message after adding the bot,
+   then open:
 
-- HttpOnly, so browser JavaScript cannot read it
-- Secure in production
-- SameSite Strict
-- 30-day browser expiry
+   ```text
+   https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates
+   ```
 
-The password itself is never stored in the cookie or browser storage. Changing
-`DASHBOARD_PASSWORD` immediately invalidates existing sessions.
+   Copy the value under `channel_post.chat.id`. It normally starts with `-100`.
 
-## Sleeper data
+5. Add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` to the Vercel Production
+   environment.
+6. Add the same strong random scheduling secret as:
+   - `CRON_SECRET` in Vercel;
+   - `DAILY_BRIEFING_SECRET` in the GitHub repository's Actions secrets.
+7. Redeploy the project, then manually run **Daily Telegram briefing** from the
+   repository's Actions tab to confirm delivery.
 
-`SLEEPER_USERNAME` identifies your roster. `SLEEPER_LEAGUE_ID` pins the app to
-one league, even if the account belongs to several.
+Keep the bot token and scheduling secret private.
 
-The app uses documented read-only endpoints for:
-
-- NFL state
-- league settings and scoring
-- league users and rosters
-- weekly matchups
-- NFL player metadata
-
-Weekly projections come from Sleeper's undocumented
-`api.sleeper.com/projections` endpoint. That endpoint can change without
-notice. Its response is isolated behind a validated adapter; if the shape
-changes, the dashboard reports an unavailable data feed instead of generating
-advice from missing information.
-
-Recommendations also include the previous three weeks of actual scoring,
-current Sleeper injury designations, the upcoming opponent, and both 48-hour
-Sleeper add and drop trends. Waiver suggestions are restricted to players who
-are absent from every roster in the configured league. The dashboard does not
-include live news or web search. Always verify late injury and inactive reports
-before kickoff.
-
-## Recommendation pipeline
-
-The model does not receive the full NFL player pool and cannot freely invent
-moves. Application code first:
-
-1. Applies the league's scoring settings to weekly projected stats.
-2. Calculates recent scoring averages using the same league settings.
-3. Optimizes legal roster slots, including flex and superflex eligibility.
-4. Compares starter sets so slot rearrangements are never shown as lineup
-   changes.
-5. Finds start/sit differences from the current Sleeper lineup.
-6. Finds free-agent upgrades using projections, recent production, injury
-   context, and league-wide add activity. Players occupying a Sleeper injury
-   reserve slot are protected and are never proposed as the corresponding drop.
-7. Finds approximately balanced one-for-one trades that improve both rosters.
-
-Only those candidate IDs and their relevant facts are sent to OpenRouter.
-Structured model output is validated with Zod and rejected if it refers to an
-unknown candidate. The decision desk shows at most the five highest-priority
-moves across all categories. Every returned move includes a required `high`,
-`medium`, or `low` strength rating plus a numeric confidence score.
-
-Generation happens only when **Generate game plan** is selected. A valid
-response is cached in `localStorage` using a fingerprint of the week, rosters,
-starters, scoring, projections, and model. It does not persist across browsers
-or devices.
-
-## OpenRouter cost controls
-
-OpenRouter bills by usage rather than requiring a monthly application
-subscription. `OPENROUTER_MODEL` can be changed without a deployment code
-change. The example uses a low-cost Gemini Flash-class model.
-
-The request:
-
-- sends only shortlisted candidates;
-- uses a bounded completion size;
-- uses structured JSON output;
-- asks OpenRouter to prefer lower-cost providers;
-- runs only on explicit user action.
-
-Review the selected model's current token pricing in the OpenRouter catalog
-before deployment.
-
-## Daily Telegram briefing
-
-The repository includes a scheduled workflow that requests a protected server
-route every day at 08:00 in `Europe/Zurich`. It invokes both possible UTC
-offsets and skips the inactive offset, so the delivery time follows Swiss
-daylight-saving changes.
-
-The server sends two Telegram messages in order:
-
-1. **The analyst's read**
-2. **Next best moves**, globally ranked and limited to five
-
-Generating or regenerating the game plan from the dashboard sends the same
-two-message briefing immediately. Telegram delivery is reported in the
-dashboard without discarding a successfully generated game plan if Telegram is
-unconfigured or temporarily unavailable.
-
-To enable delivery:
-
-1. Create a bot with Telegram's BotFather.
-2. Add the bot to the target channel as an administrator with permission to
-   post messages.
-3. Add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` to the Vercel Production
-   environment. A public channel username such as `@my_fantasy_channel` can be
-   used as the chat ID; private channels generally use a numeric ID.
-4. Set a single random value of at least 16 characters as both:
-   - the Vercel Production environment variable `CRON_SECRET`;
-   - the GitHub Actions repository secret `DAILY_BRIEFING_SECRET`.
-5. Redeploy after adding or changing Vercel environment variables.
-
-The GitHub Actions workflow can be run manually from the Actions tab to test
-delivery immediately. Manual runs use the same protected route but bypass the
-08:00 time guard. The Telegram credentials and cron secret are server-only and
-are never included in the dashboard bundle.
-
-## Deploy to Vercel
+## Deploying
 
 1. Import the repository into Vercel.
-2. Add every variable from `.env.example` in Project Settings.
-3. Set `APP_URL` to the production origin, without a trailing slash.
-4. Deploy and verify that an incorrect password is rejected.
+2. Add the required configuration options to the Production environment.
+3. Set `APP_URL` to the final production address.
+4. Deploy the project.
 
-No application database, cron job, or Vercel storage product is required.
+After adding or changing a Vercel environment variable, redeploy so the new
+value is available to the application.
 
-## Checks
+## Important limitations
 
-```bash
-npm test
-npm run typecheck
-npm run lint
-npm run build
-```
-
-Playwright is configured for a login-page smoke test:
-
-```bash
-npx playwright install chromium
-npm run test:e2e
-```
-
-## Security and operating notes
-
-- `.env*` files are ignored except `.env.example`; never commit real keys.
-- The OpenRouter key is used only by the authenticated server route.
-- Use a strong, unique `DASHBOARD_PASSWORD` and rotate it if it is exposed.
-- Sleeper's API is free for non-commercial use and recommends staying below
-  1,000 calls per minute. This app uses server revalidation and a single-user
-  flow well below that threshold.
-- AI recommendations and projections are estimates, not guarantees.
+- Recommendations and projections are estimates, not guarantees.
+- The dashboard does not currently include live news or web search.
+- Always verify late injuries, inactive reports, and kickoff-time changes in
+  Sleeper.
+- All lineup changes and transactions must be completed in Sleeper.
+- Generating a game plan uses the configured OpenRouter model and may incur a
+  small usage charge.
