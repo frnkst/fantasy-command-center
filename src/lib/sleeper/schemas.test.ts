@@ -5,6 +5,7 @@ import {
   playerMapSchema,
   projectionSchema,
   rosterSchema,
+  sleeperUserSchema,
 } from "@/lib/sleeper/schemas";
 
 describe("Sleeper schemas", () => {
@@ -57,5 +58,17 @@ describe("Sleeper schemas", () => {
         stats: { rec: 5, rec_yd: 70 },
       }).stats.rec,
     ).toBe(5);
+  });
+
+  it("accepts league members without a username", () => {
+    const member = sleeperUserSchema.parse({
+      user_id: "member-1",
+      display_name: "League Member",
+      avatar: null,
+      metadata: { team_name: "The Team" },
+    });
+
+    expect(member.username).toBeUndefined();
+    expect(member.display_name).toBe("League Member");
   });
 });

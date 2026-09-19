@@ -4,7 +4,7 @@ const nullableString = z.string().nullable().optional();
 
 export const sleeperUserSchema = z.object({
   user_id: z.string(),
-  username: z.string().nullable(),
+  username: z.string().nullable().optional(),
   display_name: z.string().nullable(),
   avatar: nullableString,
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
