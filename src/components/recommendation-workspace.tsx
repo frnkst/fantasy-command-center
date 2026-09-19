@@ -34,6 +34,11 @@ const cachedResponseSchema = z.object({
   generatedAt: z.string(),
   model: z.string(),
   recommendations: recommendationResponseSchema,
+  telegram: z
+    .object({
+      status: z.enum(["sent", "not_configured", "failed"]),
+    })
+    .optional(),
 });
 
 type CachedResponse = z.infer<typeof cachedResponseSchema>;
@@ -567,6 +572,22 @@ export function RecommendationWorkspace({
               <Clock className="size-3.5" aria-hidden="true" />
               Generated {new Date(cached.generatedAt).toLocaleString()}
             </div>
+            {cached.telegram ? (
+              <p
+                className={
+                  cached.telegram.status === "sent"
+                    ? "px-1 text-xs text-[#176b4d]"
+                    : "px-1 text-xs text-[#a4481c]"
+                }
+                role={cached.telegram.status === "failed" ? "alert" : undefined}
+              >
+                {cached.telegram.status === "sent"
+                  ? "Telegram briefing delivered."
+                  : cached.telegram.status === "not_configured"
+                    ? "Telegram briefing is not configured."
+                    : "Telegram briefing delivery failed."}
+              </p>
+            ) : null}
           </aside>
         </div>
       ) : (

@@ -158,6 +158,11 @@ The server sends two Telegram messages in order:
 1. **The analyst's read**
 2. **Next best moves**, globally ranked and limited to five
 
+Generating or regenerating the game plan from the dashboard sends the same
+two-message briefing immediately. Telegram delivery is reported in the
+dashboard without discarding a successfully generated game plan if Telegram is
+unconfigured or temporarily unavailable.
+
 To enable delivery:
 
 1. Create a bot with Telegram's BotFather.
