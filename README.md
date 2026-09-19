@@ -51,10 +51,13 @@ generic player ranking.
 The same game plan can be delivered to a Telegram channel:
 
 - automatically every day at 08:00 in the `Europe/Zurich` timezone;
-- immediately whenever you generate or refresh the game plan in the dashboard.
+- on demand with **Send briefing to Telegram** in the dashboard.
 
 Telegram receives two messages: **The analyst's read** followed by the five
 **Next best moves**.
+
+A fresh game plan is generated automatically every time the dashboard is
+opened. Automatic dashboard generation does not send a Telegram message.
 
 ## Configuration options
 
@@ -97,7 +100,8 @@ An example configuration is available in [`.env.example`](./.env.example).
    npm run dev
    ```
 
-5. Open <http://localhost:3000>, sign in, and generate your first game plan.
+5. Open <http://localhost:3000> and sign in. The latest game plan is generated
+   automatically.
 
 ## Setting up Telegram
 

@@ -11,8 +11,7 @@ import {
   Stars02,
   UserPlus01,
 } from "@untitledui/icons";
-import { useMemo, useState, useSyncExternalStore } from "react";
-import { z } from "zod";
+import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,32 +25,9 @@ import type {
 } from "@/lib/dashboard/view-model";
 import {
   type RecommendationResponse,
-  recommendationResponseSchema,
 } from "@/lib/recommendations/schema";
 
-const cachedResponseSchema = z.object({
-  fingerprint: z.string(),
-  generatedAt: z.string(),
-  model: z.string(),
-  recommendations: recommendationResponseSchema,
-  telegram: z
-    .object({
-      status: z.enum(["sent", "not_configured", "failed"]),
-    })
-    .optional(),
-});
-
-type CachedResponse = z.infer<typeof cachedResponseSchema>;
 type RecommendationItem = RecommendationResponse["lineup"][number];
-
-function subscribeToCache(callback: () => void) {
-  window.addEventListener("storage", callback);
-  window.addEventListener("fcc-recommendations-cache", callback);
-  return () => {
-    window.removeEventListener("storage", callback);
-    window.removeEventListener("fcc-recommendations-cache", callback);
-  };
-}
 
 function PlayerLine({
   player,
@@ -355,29 +331,19 @@ function DecisionCard({
 
 export function RecommendationWorkspace({
   dashboard,
+  recommendations,
+  generatedAt,
+  generationError,
 }: {
   dashboard: DashboardViewData;
+  recommendations: RecommendationResponse | null;
+  generatedAt: string;
+  generationError: string | null;
 }) {
-  const storageKey = `fcc:recommendations:${dashboard.fingerprint}`;
-  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
-  const [error, setError] = useState<string | null>(null);
-  const cachedRaw = useSyncExternalStore(
-    subscribeToCache,
-    () => localStorage.getItem(storageKey),
-    () => null,
-  );
-  const cached = useMemo<CachedResponse | null>(() => {
-    if (!cachedRaw) return null;
-    try {
-      const parsed = cachedResponseSchema.safeParse(JSON.parse(cachedRaw));
-      if (parsed.success && parsed.data.fingerprint === dashboard.fingerprint) {
-        return parsed.data;
-      }
-    } catch {
-      return null;
-    }
-    return null;
-  }, [cachedRaw, dashboard.fingerprint]);
+  const [telegramStatus, setTelegramStatus] = useState<
+    "idle" | "loading" | "sent" | "error"
+  >("idle");
+  const [telegramError, setTelegramError] = useState<string | null>(null);
 
   const lookup = useMemo(
     () => ({
@@ -395,17 +361,17 @@ export function RecommendationWorkspace({
   );
 
   const decisions = useMemo(() => {
-    if (!cached) return [];
+    if (!recommendations) return [];
     const ranked: RankedDecision[] = [];
-    for (const advice of cached.recommendations.lineup) {
+    for (const advice of recommendations.lineup) {
       const candidate = lookup.lineup.get(advice.candidateId);
       if (candidate) ranked.push({ kind: "lineup", advice, candidate });
     }
-    for (const advice of cached.recommendations.waivers) {
+    for (const advice of recommendations.waivers) {
       const candidate = lookup.waivers.get(advice.candidateId);
       if (candidate) ranked.push({ kind: "waiver", advice, candidate });
     }
-    for (const advice of cached.recommendations.trades) {
+    for (const advice of recommendations.trades) {
       const candidate = lookup.trades.get(advice.candidateId);
       if (candidate) ranked.push({ kind: "trade", advice, candidate });
     }
@@ -414,16 +380,21 @@ export function RecommendationWorkspace({
         a.advice.priority - b.advice.priority ||
         b.advice.confidence - a.advice.confidence,
     ).slice(0, 5);
-  }, [cached, lookup]);
+  }, [lookup, recommendations]);
 
-  async function generate() {
-    setStatus("loading");
-    setError(null);
+  async function sendToTelegram() {
+    if (!recommendations) return;
+    setTelegramStatus("loading");
+    setTelegramError(null);
     try {
-      const response = await fetch("/api/recommendations", {
+      const response = await fetch("/api/telegram/briefing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fingerprint: dashboard.fingerprint }),
+        body: JSON.stringify({
+          fingerprint: dashboard.fingerprint,
+          generatedAt,
+          recommendations,
+        }),
       });
       const payload: unknown = await response.json();
       if (!response.ok) {
@@ -432,25 +403,22 @@ export function RecommendationWorkspace({
           payload !== null &&
           "error" in payload &&
           typeof payload.error === "string"
-            ? payload.error
-            : "The game plan could not be generated.";
+          ? payload.error
+          : "The Telegram briefing could not be delivered.";
         throw new Error(message);
       }
-      const parsed = cachedResponseSchema.parse(payload);
-      localStorage.setItem(storageKey, JSON.stringify(parsed));
-      window.dispatchEvent(new Event("fcc-recommendations-cache"));
-      setStatus("idle");
+      setTelegramStatus("sent");
     } catch (requestError) {
-      setError(
+      setTelegramError(
         requestError instanceof Error
           ? requestError.message
-          : "The game plan could not be generated.",
+          : "The Telegram briefing could not be delivered.",
       );
-      setStatus("error");
+      setTelegramStatus("error");
     }
   }
 
-  const advice = cached?.recommendations;
+  const advice = recommendations;
   const candidateCounts = [
     {
       label: "Lineup",
@@ -492,23 +460,11 @@ export function RecommendationWorkspace({
             those grounded candidates, including the evidence against each move.
           </p>
         </div>
-        {cached ? (
-          <Button onClick={generate} disabled={status === "loading"}>
-            {status === "loading" ? (
-              <RefreshCw01 className="size-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <MagicWand02 className="size-4" aria-hidden="true" />
-            )}
-            {status === "loading"
-              ? "Generating dashboard…"
-              : "Generate dashboard"}
-          </Button>
-        ) : null}
       </div>
 
-      {error ? (
+      {generationError ? (
         <p className="mb-4 rounded-xl border border-[#e7b8bb] bg-[#fcebec] px-4 py-3 text-sm text-[#96323a]">
-          {error}
+          {generationError}
         </p>
       ) : null}
 
@@ -570,22 +526,37 @@ export function RecommendationWorkspace({
 
             <div className="flex items-center gap-2 px-1 text-xs text-[#737d87]">
               <Clock className="size-3.5" aria-hidden="true" />
-              Generated {new Date(cached.generatedAt).toLocaleString()}
+              Generated {new Date(generatedAt).toLocaleString()}
             </div>
-            {cached.telegram ? (
+            <Button
+              tone="secondary"
+              className="w-full"
+              onClick={sendToTelegram}
+              disabled={telegramStatus === "loading"}
+            >
+              {telegramStatus === "loading" ? (
+                <RefreshCw01
+                  className="size-4 animate-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <MagicWand02 className="size-4" aria-hidden="true" />
+              )}
+              {telegramStatus === "loading"
+                ? "Sending briefing…"
+                : "Send briefing to Telegram"}
+            </Button>
+            {telegramStatus === "sent" ? (
+              <p className="px-1 text-xs text-[#176b4d]" role="status">
+                Telegram briefing delivered.
+              </p>
+            ) : null}
+            {telegramError ? (
               <p
-                className={
-                  cached.telegram.status === "sent"
-                    ? "px-1 text-xs text-[#176b4d]"
-                    : "px-1 text-xs text-[#a4481c]"
-                }
-                role={cached.telegram.status === "failed" ? "alert" : undefined}
+                className="px-1 text-xs leading-5 text-[#a4481c]"
+                role="alert"
               >
-                {cached.telegram.status === "sent"
-                  ? "Telegram briefing delivered."
-                  : cached.telegram.status === "not_configured"
-                    ? "Telegram briefing is not configured."
-                    : "Telegram briefing delivery failed."}
+                {telegramError}
               </p>
             ) : null}
           </aside>
@@ -599,31 +570,11 @@ export function RecommendationWorkspace({
                 <Stars02 className="size-5" aria-hidden="true" />
               </span>
               <h3 className="font-display mt-5 text-3xl font-semibold tracking-[-0.025em] sm:text-4xl">
-                Turn this week&apos;s data into a clear plan.
+                The latest analysis is unavailable.
               </h3>
               <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[#65707a]">
-                Review the strongest lineup, waiver, and trade opportunities
-                together—ranked by expected impact, confidence, and urgency.
-              </p>
-              <Button
-                onClick={generate}
-                disabled={status === "loading"}
-                className="mt-6 min-w-52"
-              >
-                {status === "loading" ? (
-                  <RefreshCw01
-                    className="size-4 animate-spin"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <MagicWand02 className="size-4" aria-hidden="true" />
-                )}
-                {status === "loading"
-                  ? "Generating dashboard…"
-                  : "Generate dashboard"}
-              </Button>
-              <p className="mt-3 text-xs text-[#7b848d]">
-                This also sends the briefing to Telegram when configured.
+                Refresh the page to run a new analysis. Your current Sleeper
+                matchup and candidate data remain available below.
               </p>
             </div>
           </div>

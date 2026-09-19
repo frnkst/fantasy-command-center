@@ -15,8 +15,10 @@ import { Panel } from "@/components/ui/panel";
 import { requireOwner } from "@/lib/auth";
 import { buildDashboardBundle } from "@/lib/dashboard/data";
 import type { PlayerView, TeamView } from "@/lib/dashboard/view-model";
+import { generateRecommendations } from "@/lib/recommendations/openrouter";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 function PlayerRow({ player }: { player: PlayerView }) {
   return (
@@ -222,7 +224,19 @@ function ReadinessCard({
 
 export default async function Home() {
   await requireOwner();
-  const { view } = await buildDashboardBundle();
+  const { view, prompt } = await buildDashboardBundle();
+  const generatedAt = new Date();
+  let analysis: Awaited<ReturnType<typeof generateRecommendations>> | null = null;
+  let analysisError: string | null = null;
+  try {
+    analysis = await generateRecommendations(prompt);
+  } catch (error) {
+    console.error("Dashboard analysis generation failed", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    analysisError =
+      "The latest analysis could not be generated. Your live Sleeper data is still shown below.";
+  }
   const projectionDate = view.projectionUpdatedAt
     ? new Date(view.projectionUpdatedAt).toLocaleString("en", {
         month: "short",
@@ -245,7 +259,13 @@ export default async function Home() {
     (a, b) => b.projectedGain - a.projectedGain,
   )[0];
   const outlook =
-    margin === null
+    analysis?.outlook === "favored"
+      ? "Protect your advantage."
+      : analysis?.outlook === "underdog"
+        ? "Find an edge before kickoff."
+        : analysis?.outlook === "toss_up"
+          ? "A close week will reward small decisions."
+          : margin === null
       ? "Prepare for the week ahead."
       : margin >= 5
         ? "Protect your advantage."
@@ -328,17 +348,28 @@ export default async function Home() {
                   {outlook}
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-7 text-white/67 sm:text-lg">
-                  {actionSignal.title}
+                  {analysis?.summary ?? actionSignal.title}
                 </p>
-                <div className="mt-5 max-w-2xl border-l-2 border-[#829cff] pl-4 text-sm leading-6 text-white/55">
-                  {actionSignal.detail}
-                </div>
+                {analysis ? (
+                  <div className="mt-5 flex flex-wrap items-center gap-2">
+                    <Badge className="border-white/15 bg-white/10 text-white">
+                      {analysis.outlook.replace("_", " ")} outlook
+                    </Badge>
+                    <span className="text-xs text-white/45">
+                      Fresh analysis generated for this visit
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mt-5 max-w-2xl border-l-2 border-[#829cff] pl-4 text-sm leading-6 text-white/55">
+                    {actionSignal.detail}
+                  </div>
+                )}
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <a
                     href="#decisions"
                     className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-extrabold text-[#17202a] transition hover:-translate-y-0.5 hover:bg-[#eef1ff]"
                   >
-                    Review opportunities
+                    Review today&apos;s briefing
                     <ChevronRight className="size-4" aria-hidden="true" />
                   </a>
                   <span className="text-xs text-white/45">
@@ -395,7 +426,12 @@ export default async function Home() {
           </Panel>
         </section>
 
-        <RecommendationWorkspace dashboard={view} />
+        <RecommendationWorkspace
+          dashboard={view}
+          recommendations={analysis}
+          generatedAt={generatedAt.toISOString()}
+          generationError={analysisError}
+        />
 
         <section
           id="lineups"

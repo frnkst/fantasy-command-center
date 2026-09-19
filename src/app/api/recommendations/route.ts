@@ -1,13 +1,8 @@
 import { z } from "zod";
 
 import { isAuthenticated } from "@/lib/auth";
-import { getTelegramConfig } from "@/lib/config";
 import { buildDashboardBundle } from "@/lib/dashboard/data";
 import { generateRecommendations } from "@/lib/recommendations/openrouter";
-import {
-  formatTelegramBriefing,
-  sendTelegramBriefing,
-} from "@/lib/telegram";
 
 const requestSchema = z.object({
   fingerprint: z.string().min(1),
@@ -44,35 +39,12 @@ export async function POST(request: Request) {
 
     const recommendations = await generateRecommendations(prompt);
     const generatedAt = new Date();
-    let telegram: "sent" | "not_configured" | "failed";
-    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID) {
-      telegram = "not_configured";
-    } else {
-      try {
-        const messages = formatTelegramBriefing(
-          view,
-          recommendations,
-          generatedAt,
-        );
-        await sendTelegramBriefing(getTelegramConfig(), messages);
-        telegram = "sent";
-      } catch (telegramError) {
-        telegram = "failed";
-        console.error("Dashboard Telegram briefing failed", {
-          message:
-            telegramError instanceof Error
-              ? telegramError.message
-              : String(telegramError),
-        });
-      }
-    }
 
     return Response.json({
       fingerprint: view.fingerprint,
       generatedAt: generatedAt.toISOString(),
       model: view.model,
       recommendations,
-      telegram: { status: telegram },
     });
   } catch (error) {
     console.error("Recommendation generation failed", {
