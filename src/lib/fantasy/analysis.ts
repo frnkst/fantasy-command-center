@@ -221,7 +221,40 @@ export function optimizeLineup(
   };
 }
 
-/** Compares Sleeper's ordered current starters with the optimal lineup. */
+function hasLegalStarterAssignment(
+  players: readonly AnalysisPlayer[],
+  rosterPositions: readonly RosterSlot[],
+): boolean {
+  const activeSlots = rosterPositions
+    .map(normalized)
+    .filter((slot) => !EXCLUDED_SLOTS.has(slot));
+  if (players.length > activeSlots.length) return false;
+
+  const playerForSlot = Array<number>(activeSlots.length).fill(-1);
+  const assign = (playerIndex: number, visited: boolean[]): boolean => {
+    for (let slotIndex = 0; slotIndex < activeSlots.length; slotIndex += 1) {
+      if (
+        visited[slotIndex] ||
+        !isEligibleForSlot(players[playerIndex], activeSlots[slotIndex])
+      ) continue;
+      visited[slotIndex] = true;
+      if (
+        playerForSlot[slotIndex] < 0 ||
+        assign(playerForSlot[slotIndex], visited)
+      ) {
+        playerForSlot[slotIndex] = playerIndex;
+        return true;
+      }
+    }
+    return false;
+  };
+
+  return players.every((_, playerIndex) =>
+    assign(playerIndex, Array(activeSlots.length).fill(false)),
+  );
+}
+
+/** Compares the current and optimal starter sets without reporting relocations. */
 export function findStartSitSwaps(
   rosterPlayers: readonly AnalysisPlayer[],
   rosterPositions: readonly RosterSlot[],
@@ -229,16 +262,77 @@ export function findStartSitSwaps(
 ): StartSitSwap[] {
   const optimized = optimizeLineup(rosterPlayers, rosterPositions);
   const byId = new Map(rosterPlayers.map((player) => [player.playerId, player]));
-  return optimized.entries.flatMap((entry, activeIndex) => {
-    const start = entry.player;
-    const sit = byId.get(currentStarterIds[activeIndex] ?? "") ?? null;
-    if (!start || start.playerId === sit?.playerId) return [];
+  const currentIds = new Set(currentStarterIds.filter((id): id is string => !!id));
+  const optimizedIds = new Set(
+    optimized.starters.map(({ playerId }) => playerId),
+  );
+  const currentPlayers = [...currentIds].flatMap((id) => {
+    const current = byId.get(id);
+    return current ? [current] : [];
+  });
+  const starts = optimized.entries.flatMap((entry) =>
+    entry.player && !currentIds.has(entry.player.playerId)
+      ? [{ entry, player: entry.player }]
+      : [],
+  );
+  const sits = currentPlayers
+    .filter(({ playerId }) => !optimizedIds.has(playerId))
+    .sort(
+      (a, b) =>
+        a.projectedPoints - b.projectedPoints ||
+        a.playerId.localeCompare(b.playerId),
+    );
+
+  const matchedStartForSit = Array<number>(sits.length).fill(-1);
+  const pair = (startIndex: number, visited: boolean[]): boolean => {
+    const start = starts[startIndex].player;
+    for (let sitIndex = 0; sitIndex < sits.length; sitIndex += 1) {
+      if (visited[sitIndex]) continue;
+      const sit = sits[sitIndex];
+      const proposedStarters = currentPlayers
+        .filter(({ playerId }) => playerId !== sit.playerId)
+        .concat(start);
+      if (!hasLegalStarterAssignment(proposedStarters, rosterPositions)) continue;
+      visited[sitIndex] = true;
+      if (
+        matchedStartForSit[sitIndex] < 0 ||
+        pair(matchedStartForSit[sitIndex], visited)
+      ) {
+        matchedStartForSit[sitIndex] = startIndex;
+        return true;
+      }
+    }
+    return false;
+  };
+
+  starts.forEach((_, startIndex) => {
+    pair(startIndex, Array(sits.length).fill(false));
+  });
+
+  const sitForStart = new Map<number, AnalysisPlayer>();
+  matchedStartForSit.forEach((startIndex, sitIndex) => {
+    if (startIndex >= 0) sitForStart.set(startIndex, sits[sitIndex]);
+  });
+  return starts.flatMap<StartSitSwap>(({ entry, player: start }, startIndex) => {
+    const sit = sitForStart.get(startIndex);
+    if (sit) {
+      return [{
+        slot: entry.slot,
+        slotIndex: entry.slotIndex,
+        start,
+        sit,
+        projectedGain: start.projectedPoints - sit.projectedPoints,
+      }];
+    }
+
+    const proposedStarters = currentPlayers.concat(start);
+    if (!hasLegalStarterAssignment(proposedStarters, rosterPositions)) return [];
     return [{
       slot: entry.slot,
       slotIndex: entry.slotIndex,
       start,
-      sit,
-      projectedGain: start.projectedPoints - (sit?.projectedPoints ?? 0),
+      sit: null,
+      projectedGain: start.projectedPoints,
     }];
   });
 }

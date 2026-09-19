@@ -27,7 +27,9 @@ import {
   getNflState,
   getPlayers,
   getSleeperUser,
+  getTrendingPlayers,
   getWeeklyProjections,
+  getWeeklyStats,
 } from "@/lib/sleeper/client";
 import type {
   SleeperPlayer,
@@ -103,6 +105,9 @@ function promptPlayer(player: PlayerView) {
     opponent: player.opponent,
     projectedPoints: player.projectedPoints,
     injuryStatus: player.injuryStatus,
+    recentAverage: player.recentAverage,
+    recentGames: player.recentGames,
+    addTrend48h: player.trendCount,
   };
 }
 
@@ -119,12 +124,34 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
   }
 
   const week = Math.max(1, state.display_week || state.leg || state.week);
-  const [users, rosters, matchups, playerMap, projections] = await Promise.all([
+  const recentWeeks = Array.from(
+    { length: Math.min(3, Math.max(0, week - 1)) },
+    (_, index) => week - index - 1,
+  );
+  const [
+    users,
+    rosters,
+    matchups,
+    playerMap,
+    projections,
+    recentStats,
+    trendingPlayers,
+  ] = await Promise.all([
     getLeagueUsers(league.league_id),
     getLeagueRosters(league.league_id),
     getLeagueMatchups(league.league_id, week),
     getPlayers(),
     getWeeklyProjections(league.season, week, league.season_type || state.season_type),
+    Promise.all(
+      recentWeeks.map((recentWeek) =>
+        getWeeklyStats(
+          league.season,
+          recentWeek,
+          league.season_type || state.season_type,
+        ),
+      ),
+    ),
+    getTrendingPlayers(),
   ]);
 
   const myRoster = rosters.find((roster) => roster.owner_id === account.user_id);
@@ -138,6 +165,26 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
     projections.map((projection) => [projection.player_id, projection]),
   );
   const receptionPoints = league.scoring_settings.rec ?? 0;
+  const recentPointsByPlayer = new Map<string, number[]>();
+  for (const weeklyStats of recentStats) {
+    for (const statLine of weeklyStats) {
+      const points = calculateProjectedPoints(
+        statLine.stats,
+        league.scoring_settings,
+        {
+          fallbackPoints: fallbackProjection(statLine, receptionPoints),
+        },
+      );
+      if (points > 0) {
+        const values = recentPointsByPlayer.get(statLine.player_id) ?? [];
+        values.push(points);
+        recentPointsByPlayer.set(statLine.player_id, values);
+      }
+    }
+  }
+  const trendCountByPlayer = new Map(
+    trendingPlayers.map((player) => [player.player_id, player.count]),
+  );
   const analysisById = new Map<string, AnalysisPlayer>();
   const viewById = new Map<string, PlayerView>();
 
@@ -160,6 +207,7 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
       injuryStatus:
         projection?.player?.injury_status ?? player?.injury_status ?? null,
     };
+    const recentPoints = recentPointsByPlayer.get(playerId) ?? [];
     analysisById.set(playerId, normalized);
     viewById.set(playerId, {
       id: playerId,
@@ -168,6 +216,12 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
       team: projection?.team ?? player?.team ?? "FA",
       opponent: projection?.opponent ?? null,
       projectedPoints,
+      recentAverage: recentPoints.length
+        ? recentPoints.reduce((total, points) => total + points, 0) /
+          recentPoints.length
+        : null,
+      recentGames: recentPoints.length,
+      trendCount: trendCountByPlayer.get(playerId) ?? 0,
       injuryStatus: normalized.injuryStatus ?? null,
     });
     return normalized;
@@ -284,6 +338,15 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
         drop,
         projectedGain: candidate.projectedGain,
       };
+    })
+    .sort((a, b) => {
+      const signal = (candidate: WaiverCandidateView) =>
+        candidate.projectedGain +
+        ((candidate.add.recentAverage ?? 0) -
+          (candidate.drop.recentAverage ?? 0)) *
+          0.15 +
+        Math.log10(candidate.add.trendCount + 1) * 0.25;
+      return signal(b) - signal(a);
     });
 
   const tradeCandidates: TradeCandidateView[] = rosters
@@ -331,9 +394,17 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
         ),
       0,
     ) || null;
+  const recentStatsUpdatedAt =
+    recentStats
+      .flat()
+      .reduce(
+        (latest, statLine) =>
+          Math.max(latest, statLine.updated_at ?? statLine.last_modified ?? 0),
+        0,
+      ) || null;
   const optimized = optimizeLineup(myPlayers, league.roster_positions);
   const fingerprint = stableFingerprint({
-    version: 1,
+    version: 2,
     leagueId: league.league_id,
     season: league.season,
     week,
@@ -341,6 +412,8 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
     rostered: rosters.map((roster) => [roster.roster_id, roster.players]),
     scoring: league.scoring_settings,
     projections: projectionUpdatedAt,
+    recentStats: recentStatsUpdatedAt,
+    trends: trendingPlayers.map((player) => [player.player_id, player.count]),
     model: config.openRouterModel,
   });
 
@@ -357,6 +430,15 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
     opponent,
     projectionUpdatedAt,
     model: config.openRouterModel,
+    dataSources: [
+      "Weekly projections",
+      recentWeeks.length
+        ? `Last ${recentWeeks.length} game logs`
+        : "Season-opening player context",
+      "48-hour add trends",
+      "Injury designations",
+      "League scoring and roster rules",
+    ],
     candidates: {
       lineup: lineupCandidates,
       waivers: waiverCandidates,

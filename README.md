@@ -92,8 +92,10 @@ notice. Its response is isolated behind a validated adapter; if the shape
 changes, the dashboard reports an unavailable data feed instead of generating
 advice from missing information.
 
-The dashboard does not include live news or web search. Always verify late
-injury and inactive reports before kickoff.
+Recommendations also include the previous three weeks of actual scoring,
+current Sleeper injury designations, the upcoming opponent, and 48-hour Sleeper
+add trends. The dashboard does not include live news or web search. Always
+verify late injury and inactive reports before kickoff.
 
 ## Recommendation pipeline
 
@@ -101,10 +103,14 @@ The model does not receive the full NFL player pool and cannot freely invent
 moves. Application code first:
 
 1. Applies the league's scoring settings to weekly projected stats.
-2. Optimizes legal roster slots, including flex and superflex eligibility.
-3. Finds start/sit differences from the current Sleeper lineup.
-4. Finds projected free-agent upgrades and realistic drop candidates.
-5. Finds approximately balanced one-for-one trades that improve both rosters.
+2. Calculates recent scoring averages using the same league settings.
+3. Optimizes legal roster slots, including flex and superflex eligibility.
+4. Compares starter sets so slot rearrangements are never shown as lineup
+   changes.
+5. Finds start/sit differences from the current Sleeper lineup.
+6. Finds free-agent upgrades using projections, recent production, injury
+   context, and league-wide add activity.
+7. Finds approximately balanced one-for-one trades that improve both rosters.
 
 Only those candidate IDs and their relevant facts are sent to OpenRouter.
 Structured model output is validated with Zod and rejected if it refers to an

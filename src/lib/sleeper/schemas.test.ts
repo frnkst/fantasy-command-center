@@ -6,6 +6,7 @@ import {
   projectionSchema,
   rosterSchema,
   sleeperUserSchema,
+  trendingPlayersSchema,
 } from "@/lib/sleeper/schemas";
 
 describe("Sleeper schemas", () => {
@@ -70,5 +71,11 @@ describe("Sleeper schemas", () => {
 
     expect(member.username).toBeUndefined();
     expect(member.display_name).toBe("League Member");
+  });
+
+  it("accepts player add trends", () => {
+    expect(
+      trendingPlayersSchema.parse([{ player_id: "p1", count: 142 }]),
+    ).toEqual([{ player_id: "p1", count: 142 }]);
   });
 });

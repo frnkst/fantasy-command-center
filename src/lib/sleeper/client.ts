@@ -10,6 +10,7 @@ import {
   projectionsSchema,
   rosterSchema,
   sleeperUserSchema,
+  trendingPlayersSchema,
   type NflState,
   type SleeperLeague,
   type SleeperMatchup,
@@ -17,6 +18,7 @@ import {
   type SleeperProjection,
   type SleeperRoster,
   type SleeperUser,
+  type TrendingPlayer,
 } from "@/lib/sleeper/schemas";
 
 const API_BASE = "https://api.sleeper.app/v1";
@@ -143,6 +145,27 @@ export function getWeeklyProjections(
   return fetchValidated(
     `${PROJECTIONS_BASE}/${encodeURIComponent(season)}/${week}?${query}`,
     projectionsSchema,
+    900,
+  );
+}
+
+export function getWeeklyStats(
+  season: string,
+  week: number,
+  seasonType: string,
+): Promise<SleeperProjection[]> {
+  const query = new URLSearchParams({ season_type: seasonType });
+  return fetchValidated(
+    `https://api.sleeper.com/stats/nfl/${encodeURIComponent(season)}/${week}?${query}`,
+    projectionsSchema,
+    3600,
+  );
+}
+
+export function getTrendingPlayers(): Promise<TrendingPlayer[]> {
+  return fetchValidated(
+    `${API_BASE}/players/nfl/trending/add?lookback_hours=48&limit=100`,
+    trendingPlayersSchema,
     900,
   );
 }

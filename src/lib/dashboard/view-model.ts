@@ -5,6 +5,9 @@ export type PlayerView = {
   team: string;
   opponent: string | null;
   projectedPoints: number;
+  recentAverage: number | null;
+  recentGames: number;
+  trendCount: number;
   injuryStatus: string | null;
 };
 
@@ -52,6 +55,7 @@ export type DashboardViewData = {
   opponent: TeamView | null;
   projectionUpdatedAt: number | null;
   model: string;
+  dataSources: string[];
   candidates: {
     lineup: LineupCandidateView[];
     waivers: WaiverCandidateView[];

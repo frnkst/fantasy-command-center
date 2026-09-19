@@ -111,6 +111,13 @@ export const projectionSchema = z.object({
 
 export const projectionsSchema = z.array(projectionSchema);
 
+export const trendingPlayerSchema = z.object({
+  player_id: z.string(),
+  count: z.number(),
+});
+
+export const trendingPlayersSchema = z.array(trendingPlayerSchema);
+
 export type SleeperUser = z.infer<typeof sleeperUserSchema>;
 export type NflState = z.infer<typeof nflStateSchema>;
 export type SleeperLeague = z.infer<typeof leagueSchema>;
@@ -118,3 +125,4 @@ export type SleeperRoster = z.infer<typeof rosterSchema>;
 export type SleeperMatchup = z.infer<typeof matchupSchema>;
 export type SleeperPlayer = z.infer<typeof playerSchema>;
 export type SleeperProjection = z.infer<typeof projectionSchema>;
+export type TrendingPlayer = z.infer<typeof trendingPlayerSchema>;

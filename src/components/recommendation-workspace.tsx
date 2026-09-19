@@ -75,6 +75,16 @@ function PlayerLine({
           {player.position} · {player.team}
           {player.opponent ? ` vs ${player.opponent}` : ""}
         </p>
+        {player.recentAverage !== null ? (
+          <p className="mt-1 text-[0.68rem] text-white/34">
+            {player.recentAverage.toFixed(1)} avg over {player.recentGames} recent
+            {player.trendCount ? ` · ${player.trendCount} adds / 48h` : ""}
+          </p>
+        ) : player.trendCount ? (
+          <p className="mt-1 text-[0.68rem] text-white/34">
+            {player.trendCount} Sleeper adds / 48h
+          </p>
+        ) : null}
       </div>
       <span className="font-score ml-auto text-sm font-bold text-white/76">
         {formatPoints(player.projectedPoints)}
@@ -266,8 +276,18 @@ export function RecommendationWorkspace({
                           key={item.candidateId}
                           className="rounded-xl border border-white/9 bg-black/12 p-4"
                         >
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <span className="font-score text-[0.62rem] font-bold tracking-[0.14em] text-lime-300 uppercase">
+                              Start this week
+                            </span>
+                            <Badge tone="positive">
+                              +{candidate.projectedGain.toFixed(1)} pts
+                            </Badge>
+                          </div>
                           <PlayerLine player={candidate.start} direction="up" />
-                          <div className="my-3 h-px bg-white/7" />
+                          <p className="font-score mt-4 mb-2 text-[0.62rem] font-bold tracking-[0.14em] text-white/32 uppercase">
+                            Move to bench
+                          </p>
                           <PlayerLine player={candidate.sit} direction="down" />
                           <RecommendationMeta advice={item} />
                         </article>
@@ -296,8 +316,18 @@ export function RecommendationWorkspace({
                           key={item.candidateId}
                           className="rounded-xl border border-white/9 bg-black/12 p-4"
                         >
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <span className="font-score text-[0.62rem] font-bold tracking-[0.14em] text-lime-300 uppercase">
+                              Add from waivers
+                            </span>
+                            <Badge tone="positive">
+                              +{candidate.projectedGain.toFixed(1)} pts
+                            </Badge>
+                          </div>
                           <PlayerLine player={candidate.add} direction="up" />
-                          <div className="my-3 h-px bg-white/7" />
+                          <p className="font-score mt-4 mb-2 text-[0.62rem] font-bold tracking-[0.14em] text-white/32 uppercase">
+                            Drop
+                          </p>
                           <PlayerLine player={candidate.drop} direction="down" />
                           <RecommendationMeta advice={item} />
                         </article>
@@ -326,11 +356,18 @@ export function RecommendationWorkspace({
                           key={item.candidateId}
                           className="rounded-xl border border-white/9 bg-black/12 p-4"
                         >
-                          <p className="mb-3 text-xs text-white/40">
-                            Proposal with {candidate.partnerName}
-                          </p>
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <span className="font-score text-[0.62rem] font-bold tracking-[0.14em] text-lime-300 uppercase">
+                              Receive
+                            </span>
+                            <span className="text-xs text-white/40">
+                              from {candidate.partnerName}
+                            </span>
+                          </div>
                           <PlayerLine player={candidate.receive} direction="up" />
-                          <div className="my-3 h-px bg-white/7" />
+                          <p className="font-score mt-4 mb-2 text-[0.62rem] font-bold tracking-[0.14em] text-white/32 uppercase">
+                            Send
+                          </p>
                           <PlayerLine player={candidate.give} direction="down" />
                           <RecommendationMeta advice={item} />
                         </article>
@@ -352,21 +389,29 @@ export function RecommendationWorkspace({
             </div>
           </>
         ) : (
-          <div className="grid gap-4 p-5 sm:grid-cols-3 sm:p-6">
-            {[
-              ["01", "Lineup", `${dashboard.candidates.lineup.length} valid swaps`],
-              ["02", "Waivers", `${dashboard.candidates.waivers.length} add-drop options`],
-              ["03", "Trades", `${dashboard.candidates.trades.length} balanced deals`],
-            ].map(([number, label, detail]) => (
-              <div
-                key={number}
-                className="rounded-xl border border-white/8 bg-black/10 p-4"
-              >
-                <span className="font-score text-xs text-lime-300">{number}</span>
-                <p className="mt-8 font-display text-2xl font-bold">{label}</p>
-                <p className="mt-1 text-sm text-white/38">{detail}</p>
-              </div>
-            ))}
+          <div className="p-5 sm:p-6">
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                ["01", "Lineup", `${dashboard.candidates.lineup.length} actual changes`],
+                ["02", "Waivers", `${dashboard.candidates.waivers.length} add-drop options`],
+                ["03", "Trades", `${dashboard.candidates.trades.length} balanced deals`],
+              ].map(([number, label, detail]) => (
+                <div
+                  key={number}
+                  className="rounded-xl border border-white/8 bg-black/10 p-4"
+                >
+                  <span className="font-score text-xs text-lime-300">{number}</span>
+                  <p className="mt-8 font-display text-2xl font-bold">{label}</p>
+                  <p className="mt-1 text-sm text-white/38">{detail}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-white/8 pt-5">
+              <span className="mr-1 text-xs text-white/32">Evidence:</span>
+              {dashboard.dataSources.map((source) => (
+                <Badge key={source}>{source}</Badge>
+              ))}
+            </div>
           </div>
         )}
       </Panel>

@@ -84,6 +84,26 @@ describe("lineup optimization", () => {
       { start: { playerId: "high" }, sit: { playerId: "low" }, projectedGain: 8 },
     ]);
   });
+
+  it("does not report swaps when existing starters only relocate slots", () => {
+    const breeceHall = player("breece-hall", "RB", 18);
+    const javonteWilliams = player("javonte-williams", "RB", 14);
+    const roster = [breeceHall, javonteWilliams, player("bench-rb", "RB", 5)];
+
+    const optimized = optimizeLineup(roster, ["RB", "FLEX"]);
+    expect(optimized.entries.map(({ player: starter }) => starter?.playerId)).toEqual([
+      "breece-hall",
+      "javonte-williams",
+    ]);
+
+    expect(
+      findStartSitSwaps(
+        roster,
+        ["RB", "FLEX"],
+        ["javonte-williams", "breece-hall"],
+      ),
+    ).toEqual([]);
+  });
 });
 
 describe("waiver candidates", () => {
