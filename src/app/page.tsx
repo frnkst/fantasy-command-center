@@ -109,7 +109,7 @@ function MatchupComparison({
           <div>
             <p className="text-xs font-bold text-[#6f7780]">Matchup outlook</p>
             <h2 className="font-display mt-1 text-3xl font-semibold tracking-[-0.025em]">
-              Projected score
+              Live projected score
             </h2>
           </div>
           {margin !== null ? (
@@ -158,8 +158,8 @@ function MatchupComparison({
           </div>
         ))}
         <p className="border-t border-[#e3dfd5] pt-4 text-xs leading-5 text-[#717b85]">
-          Baseline projection from the current Sleeper lineups. Recommended
-          changes are shown separately so the comparison remains auditable.
+          Completed players use their actual score; upcoming players use the
+          latest projection. Recommended changes are shown separately.
         </p>
       </div>
     </Panel>

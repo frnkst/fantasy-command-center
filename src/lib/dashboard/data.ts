@@ -5,11 +5,11 @@ import {
   calculateProjectedPoints,
   findBalancedTradeCandidates,
   findStartSitSwaps,
-  optimizeLineup,
   shortlistWaiverCandidates,
   stableFingerprint,
 } from "@/lib/fantasy/analysis";
 import type { AnalysisPlayer } from "@/lib/fantasy/types";
+import { applyCompletedGamePoints } from "@/lib/dashboard/view-model";
 import type {
   DashboardViewData,
   LineupCandidateView,
@@ -25,6 +25,7 @@ import {
   getLeagueRosters,
   getLeagueUsers,
   getNflState,
+  getNflSchedule,
   getPlayers,
   getSleeperUser,
   getTrendingPlayers,
@@ -32,6 +33,7 @@ import {
   getWeeklyStats,
 } from "@/lib/sleeper/client";
 import type {
+  SleeperMatchup,
   SleeperPlayer,
   SleeperProjection,
   SleeperRoster,
@@ -135,6 +137,7 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
     matchups,
     playerMap,
     projections,
+    schedule,
     recentStats,
     trendingAdds,
     trendingDrops,
@@ -144,6 +147,7 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
     getLeagueMatchups(league.league_id, week),
     getPlayers(),
     getWeeklyProjections(league.season, week, league.season_type || state.season_type),
+    getNflSchedule(league.season, league.season_type || state.season_type),
     Promise.all(
       recentWeeks.map((recentWeek) =>
         getWeeklyStats(
@@ -250,6 +254,14 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
   }
 
   const usersById = new Map(users.map((user) => [user.user_id, user]));
+  const completedTeams = new Set(
+    schedule
+      .filter(
+        (game) =>
+          game.week === week && game.status?.toLowerCase() === "complete",
+      )
+      .flatMap((game) => [game.home, game.away]),
+  );
   const rostersById = new Map(rosters.map((roster) => [roster.roster_id, roster]));
   const myMatchup = matchups.find(
     (matchup) => matchup.roster_id === myRoster.roster_id,
@@ -272,11 +284,16 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
   function buildTeam(
     roster: SleeperRoster,
     starterIds: readonly string[],
+    matchup: SleeperMatchup | undefined,
   ): TeamView {
     const owner = roster.owner_id ? usersById.get(roster.owner_id) : undefined;
-    const starters = starterIds
-      .map((playerId) => viewById.get(playerId))
-      .filter((player): player is PlayerView => Boolean(player));
+    const starters = applyCompletedGamePoints(
+      starterIds
+        .map((playerId) => viewById.get(playerId))
+        .filter((player): player is PlayerView => Boolean(player)),
+      completedTeams,
+      matchup?.players_points ?? {},
+    );
     return {
       rosterId: roster.roster_id,
       ownerName: owner?.display_name ?? owner?.username ?? "Unknown manager",
@@ -292,13 +309,14 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
   const myStarterIds = myMatchup?.starters.length
     ? myMatchup.starters
     : myRoster.starters;
-  const myTeam = buildTeam(myRoster, myStarterIds);
+  const myTeam = buildTeam(myRoster, myStarterIds, myMatchup);
   const opponent = opponentRoster
     ? buildTeam(
         opponentRoster,
         opponentMatchup?.starters.length
           ? opponentMatchup.starters
           : opponentRoster.starters,
+        opponentMatchup,
       )
     : null;
 
@@ -308,7 +326,17 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
     league.roster_positions,
     myStarterIds,
   )
-    .filter((swap) => swap.sit)
+    .filter((swap) => {
+      if (!swap.sit) return false;
+      const start = viewById.get(swap.start.playerId);
+      const sit = viewById.get(swap.sit.playerId);
+      return (
+        start &&
+        sit &&
+        !completedTeams.has(start.team) &&
+        !completedTeams.has(sit.team)
+      );
+    })
     .slice(0, 8)
     .map((swap) => {
       const sit = viewById.get(swap.sit!.playerId)!;
@@ -414,14 +442,21 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
           Math.max(latest, statLine.updated_at ?? statLine.last_modified ?? 0),
         0,
       ) || null;
-  const optimized = optimizeLineup(myPlayers, league.roster_positions);
   const fingerprint = stableFingerprint({
-    version: 3,
+    version: 4,
     leagueId: league.league_id,
     season: league.season,
     week,
     starters: myStarterIds,
     rostered: rosters.map((roster) => [roster.roster_id, roster.players]),
+    matchups: matchups.map((matchup) => [
+      matchup.roster_id,
+      matchup.starters,
+      matchup.players_points,
+    ]),
+    completedGames: schedule
+      .filter((game) => game.week === week)
+      .map((game) => [game.game_id, game.status]),
     scoring: league.scoring_settings,
     projections: projectionUpdatedAt,
     recentStats: recentStatsUpdatedAt,
@@ -467,7 +502,7 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
       scoringSummary: view.league.scoringLabel,
       myTeamName: myTeam.teamName,
       opponentName: opponent?.teamName ?? null,
-      myProjectedPoints: optimized.totalProjectedPoints,
+      myProjectedPoints: myTeam.projectedPoints,
       opponentProjectedPoints: opponent?.projectedPoints ?? null,
       projectionUpdatedAt,
     },

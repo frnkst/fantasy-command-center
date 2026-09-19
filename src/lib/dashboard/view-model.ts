@@ -63,3 +63,20 @@ export type DashboardViewData = {
     trades: TradeCandidateView[];
   };
 };
+
+export function applyCompletedGamePoints(
+  players: readonly PlayerView[],
+  completedTeams: ReadonlySet<string>,
+  actualPoints: Readonly<Record<string, number>>,
+): PlayerView[] {
+  return players.map((player) =>
+    completedTeams.has(player.team)
+      ? {
+          ...player,
+          projectedPoints: Object.hasOwn(actualPoints, player.id)
+            ? actualPoints[player.id]
+            : 0,
+        }
+      : player,
+  );
+}

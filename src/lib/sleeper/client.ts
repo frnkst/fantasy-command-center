@@ -9,6 +9,7 @@ import {
   playerMapSchema,
   projectionsSchema,
   rosterSchema,
+  scheduleSchema,
   sleeperUserSchema,
   trendingPlayersSchema,
   type NflState,
@@ -17,6 +18,7 @@ import {
   type SleeperPlayer,
   type SleeperProjection,
   type SleeperRoster,
+  type SleeperScheduleGame,
   type SleeperUser,
   type TrendingPlayer,
 } from "@/lib/sleeper/schemas";
@@ -145,6 +147,17 @@ export function getPlayers(): Promise<Record<string, SleeperPlayer>> {
     `${API_BASE}/players/nfl`,
     playerMapSchema,
     { revalidate: 86_400 },
+  );
+}
+
+export function getNflSchedule(
+  season: string,
+  seasonType: string,
+): Promise<SleeperScheduleGame[]> {
+  return fetchValidated(
+    `https://api.sleeper.com/schedule/nfl/${encodeURIComponent(seasonType)}/${encodeURIComponent(season)}`,
+    scheduleSchema,
+    "fresh",
   );
 }
 

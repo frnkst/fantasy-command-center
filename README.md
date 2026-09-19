@@ -64,6 +64,10 @@ Refreshing the page also bypasses the application cache for current Sleeper
 league, roster, matchup, projection, and trend data. Sleeper itself may still
 take a short time to publish a newly submitted change.
 
+During an active matchup, completed players use their actual fantasy points
+while players who have not played yet retain their latest projection. This
+matches the live projected total shown by Sleeper.
+
 ## Configuration options
 
 Create `.env.local` for local use or add these values to the Production

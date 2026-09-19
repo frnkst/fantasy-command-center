@@ -66,7 +66,20 @@ export const matchupSchema = z.object({
     .transform((starters) => starters ?? []),
   points: z.number().nullable().default(0),
   custom_points: z.number().nullable().optional(),
+  players_points: z.record(z.string(), z.number()).nullable().default({}),
+  starters_points: z.array(z.number()).nullable().optional(),
 });
+
+export const scheduleGameSchema = z.object({
+  status: z.string().nullable(),
+  date: z.string(),
+  home: z.string(),
+  away: z.string(),
+  week: z.number().int(),
+  game_id: z.string(),
+});
+
+export const scheduleSchema = z.array(scheduleGameSchema);
 
 export const playerSchema = z.object({
   player_id: z.string(),
@@ -123,6 +136,7 @@ export type NflState = z.infer<typeof nflStateSchema>;
 export type SleeperLeague = z.infer<typeof leagueSchema>;
 export type SleeperRoster = z.infer<typeof rosterSchema>;
 export type SleeperMatchup = z.infer<typeof matchupSchema>;
+export type SleeperScheduleGame = z.infer<typeof scheduleGameSchema>;
 export type SleeperPlayer = z.infer<typeof playerSchema>;
 export type SleeperProjection = z.infer<typeof projectionSchema>;
 export type TrendingPlayer = z.infer<typeof trendingPlayerSchema>;

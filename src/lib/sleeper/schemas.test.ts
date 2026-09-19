@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   leagueSchema,
+  matchupSchema,
   playerMapSchema,
   projectionSchema,
   rosterSchema,
@@ -77,5 +78,18 @@ describe("Sleeper schemas", () => {
     expect(
       trendingPlayersSchema.parse([{ player_id: "p1", count: 142 }]),
     ).toEqual([{ player_id: "p1", count: 142 }]);
+  });
+
+  it("accepts live player points in a matchup", () => {
+    const matchup = matchupSchema.parse({
+      roster_id: 1,
+      matchup_id: 2,
+      players: ["p1"],
+      starters: ["p1"],
+      points: 17.2,
+      players_points: { p1: 17.2 },
+    });
+
+    expect(matchup.players_points).toEqual({ p1: 17.2 });
   });
 });
