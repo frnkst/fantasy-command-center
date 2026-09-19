@@ -408,7 +408,7 @@ export function RecommendationWorkspace({
       (a, b) =>
         a.advice.priority - b.advice.priority ||
         b.advice.confidence - a.advice.confidence,
-    );
+    ).slice(0, 5);
   }, [cached, lookup]);
 
   async function generate() {

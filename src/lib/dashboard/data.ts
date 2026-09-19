@@ -333,7 +333,11 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
     availablePlayers,
     myPlayers,
     league.roster_positions,
-    { limit: 12, minimumGain: 0.5 },
+    {
+      limit: 12,
+      minimumGain: 0.5,
+      protectedDropPlayerIds: myRoster.reserve ?? [],
+    },
   )
     .filter((candidate) => candidate.drop)
     .map((candidate) => {

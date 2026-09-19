@@ -58,6 +58,7 @@ export interface CandidateOptions {
   limit?: number;
   minimumGain?: number;
   unavailableInjuryStatuses?: readonly string[];
+  protectedDropPlayerIds?: readonly string[];
 }
 
 export interface WaiverCandidate {
@@ -78,4 +79,3 @@ export interface TradeCandidate {
 export interface TradeOptions extends CandidateOptions {
   maximumProjectionDifference?: number;
 }
-

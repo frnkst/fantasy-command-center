@@ -23,9 +23,13 @@ weekly projection, recent scoring average, injury designation, matchup, and
 recommendation must include a strength rating: high for multiple aligned signals
 and a clearly actionable edge, medium for a useful move with meaningful
 uncertainty, or low for a speculative marginal move. Keep the numeric confidence
-consistent with that rating. It is valid to return fewer recommendations or an
-empty category. Treat every signal as uncertain, not factual future performance.
-For trades, explain why the deal plausibly helps both managers.`;
+consistent with that rating. Return no more than five recommendations in total
+across lineup, waiver, and trade categories. Assign priorities globally across
+all categories so priority 1 is the single best move, then rank by material
+expected impact, confidence, and urgency. It is valid to return fewer
+recommendations or an empty category. Treat every signal as uncertain, not
+factual future performance. For trades, explain why the deal plausibly helps
+both managers.`;
 
 function textContent(content: unknown): string {
   if (typeof content === "string") {

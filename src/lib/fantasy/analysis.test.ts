@@ -127,6 +127,23 @@ describe("waiver candidates", () => {
       lineupGain: 7,
     });
   });
+
+  it("never proposes dropping a player stored in an injury reserve slot", () => {
+    const roster = [
+      player("ir-stash", "WR", 1, "Out"),
+      player("bench-wr", "WR", 4),
+      player("starter", "WR", 10),
+    ];
+    const result = shortlistWaiverCandidates(
+      [player("healthy-add", "WR", 12)],
+      roster,
+      ["WR", "BN", "IR"],
+      { protectedDropPlayerIds: ["ir-stash"] },
+    );
+
+    expect(result).not.toHaveLength(0);
+    expect(result.every(({ drop }) => drop?.playerId !== "ir-stash")).toBe(true);
+  });
 });
 
 describe("trade candidates", () => {

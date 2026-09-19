@@ -111,13 +111,15 @@ moves. Application code first:
    changes.
 5. Finds start/sit differences from the current Sleeper lineup.
 6. Finds free-agent upgrades using projections, recent production, injury
-   context, and league-wide add activity.
+   context, and league-wide add activity. Players occupying a Sleeper injury
+   reserve slot are protected and are never proposed as the corresponding drop.
 7. Finds approximately balanced one-for-one trades that improve both rosters.
 
 Only those candidate IDs and their relevant facts are sent to OpenRouter.
 Structured model output is validated with Zod and rejected if it refers to an
-unknown candidate. Every returned move includes a required `high`, `medium`, or
-`low` strength rating plus a numeric confidence score.
+unknown candidate. The decision desk shows at most the five highest-priority
+moves across all categories. Every returned move includes a required `high`,
+`medium`, or `low` strength rating plus a numeric confidence score.
 
 Generation happens only when **Generate game plan** is selected. A valid
 response is cached in `localStorage` using a fingerprint of the week, rosters,

@@ -354,6 +354,7 @@ export function shortlistWaiverCandidates(
   const limit = Math.max(0, options.limit ?? 10);
   const minimumGain = options.minimumGain ?? 0;
   const statuses = options.unavailableInjuryStatuses ?? DEFAULT_INACTIVE;
+  const protectedDropPlayerIds = new Set(options.protectedDropPlayerIds ?? []);
   const rosterIds = new Set(rosterPlayers.map(({ playerId }) => playerId));
   const before = optimizeLineup(rosterPlayers, rosterPositions).totalProjectedPoints;
   const candidates: WaiverCandidate[] = [];
@@ -371,7 +372,7 @@ export function shortlistWaiverCandidates(
       ? [...rosterPlayers].sort((a, b) =>
           a.projectedPoints - b.projectedPoints ||
           a.playerId.localeCompare(b.playerId),
-        )
+        ).filter(({ playerId }) => !protectedDropPlayerIds.has(playerId))
       : [null];
     for (const drop of drops) {
       const afterRoster = rosterPlayers
