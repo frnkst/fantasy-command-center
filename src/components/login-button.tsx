@@ -12,7 +12,7 @@ export function LoginButton() {
     <Button className="w-full justify-between px-5" type="submit" disabled={pending}>
       <span className="flex items-center gap-2.5">
         <Lock01 className="size-5" aria-hidden="true" />
-        {pending ? "Checking password…" : "Enter command center"}
+        {pending ? "Checking password…" : "Open The Fantasy Desk"}
       </span>
       <ArrowRight className="size-5" aria-hidden="true" />
     </Button>
