@@ -7,7 +7,8 @@ export type PlayerView = {
   projectedPoints: number;
   recentAverage: number | null;
   recentGames: number;
-  trendCount: number;
+  addTrendCount: number;
+  dropTrendCount: number;
   injuryStatus: string | null;
 };
 

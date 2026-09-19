@@ -31,6 +31,7 @@ const response = recommendationResponseSchema.parse({
     {
       candidateId: "lineup:a:b",
       priority: 1,
+      strength: "high",
       confidence: 70,
       rationale: "A has the stronger projection.",
       risk: "Projection uncertainty.",
@@ -42,6 +43,25 @@ const response = recommendationResponseSchema.parse({
 });
 
 describe("recommendation grounding", () => {
+  it("requires a strength rating on every recommendation", () => {
+    const withoutStrength = {
+      ...response,
+      lineup: [
+        {
+          candidateId: "lineup:a:b",
+          priority: 1,
+          confidence: 70,
+          rationale: "A has the stronger projection.",
+          risk: "Projection uncertainty.",
+        },
+      ],
+    };
+
+    expect(recommendationResponseSchema.safeParse(withoutStrength).success).toBe(
+      false,
+    );
+  });
+
   it("accepts known candidate IDs", () => {
     expect(assertGroundedRecommendations(response, input)).toEqual(response);
   });

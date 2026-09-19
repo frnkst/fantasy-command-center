@@ -3,6 +3,7 @@ import { z } from "zod";
 const recommendationBaseSchema = z.object({
   candidateId: z.string().min(1),
   priority: z.number().int().min(1).max(5),
+  strength: z.enum(["high", "medium", "low"]),
   confidence: z.number().int().min(0).max(100),
   rationale: z.string().min(1).max(500),
   risk: z.string().min(1).max(300),

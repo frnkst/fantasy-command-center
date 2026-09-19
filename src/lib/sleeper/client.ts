@@ -162,9 +162,11 @@ export function getWeeklyStats(
   );
 }
 
-export function getTrendingPlayers(): Promise<TrendingPlayer[]> {
+export function getTrendingPlayers(
+  type: "add" | "drop",
+): Promise<TrendingPlayer[]> {
   return fetchValidated(
-    `${API_BASE}/players/nfl/trending/add?lookback_hours=48&limit=100`,
+    `${API_BASE}/players/nfl/trending/${type}?lookback_hours=48&limit=100`,
     trendingPlayersSchema,
     900,
   );

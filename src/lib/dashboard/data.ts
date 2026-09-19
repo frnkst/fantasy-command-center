@@ -107,7 +107,8 @@ function promptPlayer(player: PlayerView) {
     injuryStatus: player.injuryStatus,
     recentAverage: player.recentAverage,
     recentGames: player.recentGames,
-    addTrend48h: player.trendCount,
+    addTrend48h: player.addTrendCount,
+    dropTrend48h: player.dropTrendCount,
   };
 }
 
@@ -135,7 +136,8 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
     playerMap,
     projections,
     recentStats,
-    trendingPlayers,
+    trendingAdds,
+    trendingDrops,
   ] = await Promise.all([
     getLeagueUsers(league.league_id),
     getLeagueRosters(league.league_id),
@@ -151,7 +153,8 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
         ),
       ),
     ),
-    getTrendingPlayers(),
+    getTrendingPlayers("add"),
+    getTrendingPlayers("drop"),
   ]);
 
   const myRoster = rosters.find((roster) => roster.owner_id === account.user_id);
@@ -182,8 +185,11 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
       }
     }
   }
-  const trendCountByPlayer = new Map(
-    trendingPlayers.map((player) => [player.player_id, player.count]),
+  const addTrendCountByPlayer = new Map(
+    trendingAdds.map((player) => [player.player_id, player.count]),
+  );
+  const dropTrendCountByPlayer = new Map(
+    trendingDrops.map((player) => [player.player_id, player.count]),
   );
   const analysisById = new Map<string, AnalysisPlayer>();
   const viewById = new Map<string, PlayerView>();
@@ -221,7 +227,8 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
           recentPoints.length
         : null,
       recentGames: recentPoints.length,
-      trendCount: trendCountByPlayer.get(playerId) ?? 0,
+      addTrendCount: addTrendCountByPlayer.get(playerId) ?? 0,
+      dropTrendCount: dropTrendCountByPlayer.get(playerId) ?? 0,
       injuryStatus: normalized.injuryStatus ?? null,
     });
     return normalized;
@@ -345,7 +352,8 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
         ((candidate.add.recentAverage ?? 0) -
           (candidate.drop.recentAverage ?? 0)) *
           0.15 +
-        Math.log10(candidate.add.trendCount + 1) * 0.25;
+        Math.log10(candidate.add.addTrendCount + 1) * 0.25 +
+        Math.log10(candidate.drop.dropTrendCount + 1) * 0.15;
       return signal(b) - signal(a);
     });
 
@@ -404,7 +412,7 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
       ) || null;
   const optimized = optimizeLineup(myPlayers, league.roster_positions);
   const fingerprint = stableFingerprint({
-    version: 2,
+    version: 3,
     leagueId: league.league_id,
     season: league.season,
     week,
@@ -413,7 +421,8 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
     scoring: league.scoring_settings,
     projections: projectionUpdatedAt,
     recentStats: recentStatsUpdatedAt,
-    trends: trendingPlayers.map((player) => [player.player_id, player.count]),
+    addTrends: trendingAdds.map((player) => [player.player_id, player.count]),
+    dropTrends: trendingDrops.map((player) => [player.player_id, player.count]),
     model: config.openRouterModel,
   });
 
@@ -435,7 +444,7 @@ export async function buildDashboardBundle(): Promise<DashboardBundle> {
       recentWeeks.length
         ? `Last ${recentWeeks.length} game logs`
         : "Season-opening player context",
-      "48-hour add trends",
+      "48-hour add/drop trends",
       "Injury designations",
       "League scoring and roster rules",
     ],

@@ -78,11 +78,17 @@ function PlayerLine({
         {player.recentAverage !== null ? (
           <p className="mt-1 text-[0.68rem] text-white/34">
             {player.recentAverage.toFixed(1)} avg over {player.recentGames} recent
-            {player.trendCount ? ` · ${player.trendCount} adds / 48h` : ""}
+            {player.addTrendCount
+              ? ` · ${player.addTrendCount} adds / 48h`
+              : player.dropTrendCount
+                ? ` · ${player.dropTrendCount} drops / 48h`
+                : ""}
           </p>
-        ) : player.trendCount ? (
+        ) : player.addTrendCount || player.dropTrendCount ? (
           <p className="mt-1 text-[0.68rem] text-white/34">
-            {player.trendCount} Sleeper adds / 48h
+            {player.addTrendCount
+              ? `${player.addTrendCount} Sleeper adds / 48h`
+              : `${player.dropTrendCount} Sleeper drops / 48h`}
           </p>
         ) : null}
       </div>
@@ -108,6 +114,22 @@ function RecommendationMeta({
 }) {
   return (
     <>
+      <div className="mt-4 flex items-center gap-2">
+        <Badge
+          tone={
+            advice.strength === "high"
+              ? "positive"
+              : advice.strength === "medium"
+                ? "warning"
+                : "neutral"
+          }
+        >
+          {advice.strength} strength
+        </Badge>
+        <span className="font-score text-[0.65rem] text-white/35">
+          {advice.confidence}% confidence
+        </span>
+      </div>
       <p className="mt-4 text-sm leading-6 text-white/66">{advice.rationale}</p>
       <div className="mt-4 flex items-start gap-2 border-t border-white/8 pt-3 text-xs leading-5 text-amber-100/65">
         <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />

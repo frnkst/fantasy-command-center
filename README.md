@@ -93,9 +93,11 @@ changes, the dashboard reports an unavailable data feed instead of generating
 advice from missing information.
 
 Recommendations also include the previous three weeks of actual scoring,
-current Sleeper injury designations, the upcoming opponent, and 48-hour Sleeper
-add trends. The dashboard does not include live news or web search. Always
-verify late injury and inactive reports before kickoff.
+current Sleeper injury designations, the upcoming opponent, and both 48-hour
+Sleeper add and drop trends. Waiver suggestions are restricted to players who
+are absent from every roster in the configured league. The dashboard does not
+include live news or web search. Always verify late injury and inactive reports
+before kickoff.
 
 ## Recommendation pipeline
 
@@ -114,7 +116,8 @@ moves. Application code first:
 
 Only those candidate IDs and their relevant facts are sent to OpenRouter.
 Structured model output is validated with Zod and rejected if it refers to an
-unknown candidate.
+unknown candidate. Every returned move includes a required `high`, `medium`, or
+`low` strength rating plus a numeric confidence score.
 
 Generation happens only when **Generate game plan** is selected. A valid
 response is cached in `localStorage` using a fingerprint of the week, rosters,

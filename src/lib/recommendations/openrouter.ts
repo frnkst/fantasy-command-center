@@ -19,10 +19,13 @@ the current lineup: the "start" player is currently on the bench and the "sit"
 player is currently starting. Use direct imperative language such as
 "Start X; bench Y" and never describe two existing starters as a swap. Weigh
 weekly projection, recent scoring average, injury designation, matchup, and
-48-hour add activity together; explain when those signals disagree. It is valid
-to return fewer recommendations or an empty category. Treat every signal as
-uncertain, not factual future performance. For trades, explain why the deal
-plausibly helps both managers.`;
+48-hour add/drop activity together; explain when those signals disagree. Every
+recommendation must include a strength rating: high for multiple aligned signals
+and a clearly actionable edge, medium for a useful move with meaningful
+uncertainty, or low for a speculative marginal move. Keep the numeric confidence
+consistent with that rating. It is valid to return fewer recommendations or an
+empty category. Treat every signal as uncertain, not factual future performance.
+For trades, explain why the deal plausibly helps both managers.`;
 
 function textContent(content: unknown): string {
   if (typeof content === "string") {
