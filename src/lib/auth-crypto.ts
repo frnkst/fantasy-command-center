@@ -1,6 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
-const SESSION_MESSAGE = "fantasy-command-center:authenticated:v1";
+const SESSION_MESSAGE = "fantasy-desk:authenticated:v1";
 
 function digest(value: string) {
   return createHash("sha256").update(value).digest();

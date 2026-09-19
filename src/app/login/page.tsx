@@ -34,7 +34,7 @@ export default async function LoginPage({
         </div>
 
         <p className="text-xs font-extrabold tracking-[0.06em] text-[#2855d9]">
-          FANTASY COMMAND CENTER
+          THE FANTASY DESK
         </p>
         <h1 className="font-display mt-4 text-5xl leading-[0.95] font-semibold tracking-[-0.04em] sm:text-6xl">
           Your smartest week starts here.

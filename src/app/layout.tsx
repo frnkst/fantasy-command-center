@@ -14,8 +14,8 @@ const display = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "Fantasy Command Center",
-  description: "Private, AI-assisted NFL matchup intelligence for Sleeper.",
+  title: "The Fantasy Desk",
+  description: "Your private league analyst for Sleeper fantasy football.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

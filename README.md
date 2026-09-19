@@ -1,9 +1,11 @@
-# Fantasy Command Center
+# The Fantasy Desk
 
-Fantasy Command Center is a private decision assistant for your Sleeper NFL
-fantasy league. It turns your current matchup, roster, league rules,
-projections, recent performance, injuries, and player trends into a focused
-weekly game plan.
+**Your private league analyst.**
+
+The Fantasy Desk is a private decision assistant for your Sleeper NFL fantasy
+league. It turns your current matchup, roster, league rules, projections,
+recent performance, injuries, and player trends into a focused weekly game
+plan.
 
 Instead of asking you to compare dozens of players and screens, it answers:
 

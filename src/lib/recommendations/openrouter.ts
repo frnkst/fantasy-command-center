@@ -58,7 +58,7 @@ export async function generateRecommendations(
   const openRouter = new OpenRouter({
     apiKey: config.openRouterApiKey,
     httpReferer: config.appUrl,
-    appTitle: "Fantasy Command Center",
+    appTitle: "The Fantasy Desk",
   });
 
   const result = await openRouter.chat.send(

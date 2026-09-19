@@ -9,7 +9,7 @@ import {
 } from "@/lib/auth-crypto";
 import { getAppConfig } from "@/lib/config";
 
-const COOKIE_NAME = "fcc-session";
+const COOKIE_NAME = "fantasy-desk-session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 
 export async function isAuthenticated() {

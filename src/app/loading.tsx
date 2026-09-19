@@ -20,10 +20,10 @@ export default function Loading() {
             </span>
             <div>
               <p className="font-display text-xl leading-none font-semibold tracking-[-0.02em]">
-                Fantasy Command Center
+                The Fantasy Desk
               </p>
               <p className="mt-1 text-[0.68rem] font-bold tracking-[0.08em] text-[#747d87]">
-                WEEKLY LEAGUE INTELLIGENCE
+                YOUR PRIVATE LEAGUE ANALYST
               </p>
             </div>
           </div>
