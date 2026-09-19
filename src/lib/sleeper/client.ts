@@ -24,6 +24,7 @@ import {
 const API_BASE = "https://api.sleeper.app/v1";
 const PROJECTIONS_BASE = "https://api.sleeper.com/projections/nfl";
 const REQUEST_TIMEOUT_MS = 10_000;
+type CachePolicy = "fresh" | { revalidate: number };
 
 export class SleeperApiError extends Error {
   constructor(
@@ -39,14 +40,21 @@ export class SleeperApiError extends Error {
 async function fetchValidated<T>(
   endpoint: string,
   schema: z.ZodType<T>,
-  revalidate: number,
+  cachePolicy: CachePolicy,
 ): Promise<T> {
   let response: Response;
   try {
     response = await fetch(endpoint, {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      next: { revalidate },
-      headers: { Accept: "application/json" },
+      ...(cachePolicy === "fresh"
+        ? { cache: "no-store" as const }
+        : { next: { revalidate: cachePolicy.revalidate } }),
+      headers: {
+        Accept: "application/json",
+        ...(cachePolicy === "fresh"
+          ? { "Cache-Control": "no-cache", Pragma: "no-cache" }
+          : {}),
+      },
     });
   } catch (error) {
     throw new SleeperApiError("Sleeper did not respond in time.", endpoint, {
@@ -86,14 +94,14 @@ async function fetchValidated<T>(
 }
 
 export function getNflState(): Promise<NflState> {
-  return fetchValidated(`${API_BASE}/state/nfl`, nflStateSchema, 300);
+  return fetchValidated(`${API_BASE}/state/nfl`, nflStateSchema, "fresh");
 }
 
 export function getSleeperUser(username: string): Promise<SleeperUser> {
   return fetchValidated(
     `${API_BASE}/user/${encodeURIComponent(username)}`,
     sleeperUserSchema,
-    3600,
+    "fresh",
   );
 }
 
@@ -101,7 +109,7 @@ export function getLeague(leagueId: string): Promise<SleeperLeague> {
   return fetchValidated(
     `${API_BASE}/league/${encodeURIComponent(leagueId)}`,
     leagueSchema,
-    300,
+    "fresh",
   );
 }
 
@@ -109,7 +117,7 @@ export function getLeagueUsers(leagueId: string): Promise<SleeperUser[]> {
   return fetchValidated(
     `${API_BASE}/league/${encodeURIComponent(leagueId)}/users`,
     sleeperUserSchema.array(),
-    300,
+    "fresh",
   );
 }
 
@@ -117,7 +125,7 @@ export function getLeagueRosters(leagueId: string): Promise<SleeperRoster[]> {
   return fetchValidated(
     `${API_BASE}/league/${encodeURIComponent(leagueId)}/rosters`,
     rosterSchema.array(),
-    120,
+    "fresh",
   );
 }
 
@@ -128,12 +136,16 @@ export function getLeagueMatchups(
   return fetchValidated(
     `${API_BASE}/league/${encodeURIComponent(leagueId)}/matchups/${week}`,
     matchupSchema.array(),
-    60,
+    "fresh",
   );
 }
 
 export function getPlayers(): Promise<Record<string, SleeperPlayer>> {
-  return fetchValidated(`${API_BASE}/players/nfl`, playerMapSchema, 86_400);
+  return fetchValidated(
+    `${API_BASE}/players/nfl`,
+    playerMapSchema,
+    { revalidate: 86_400 },
+  );
 }
 
 export function getWeeklyProjections(
@@ -145,7 +157,7 @@ export function getWeeklyProjections(
   return fetchValidated(
     `${PROJECTIONS_BASE}/${encodeURIComponent(season)}/${week}?${query}`,
     projectionsSchema,
-    900,
+    "fresh",
   );
 }
 
@@ -158,7 +170,7 @@ export function getWeeklyStats(
   return fetchValidated(
     `https://api.sleeper.com/stats/nfl/${encodeURIComponent(season)}/${week}?${query}`,
     projectionsSchema,
-    3600,
+    "fresh",
   );
 }
 
@@ -168,6 +180,6 @@ export function getTrendingPlayers(
   return fetchValidated(
     `${API_BASE}/players/nfl/trending/${type}?lookback_hours=48&limit=100`,
     trendingPlayersSchema,
-    900,
+    "fresh",
   );
 }

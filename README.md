@@ -60,6 +60,9 @@ Telegram receives two messages: **The analyst's read** followed by the five
 
 A fresh game plan is generated automatically every time the dashboard is
 opened. Automatic dashboard generation does not send a Telegram message.
+Refreshing the page also bypasses the application cache for current Sleeper
+league, roster, matchup, projection, and trend data. Sleeper itself may still
+take a short time to publish a newly submitted change.
 
 ## Configuration options
 
