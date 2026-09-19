@@ -9,7 +9,7 @@ export function Panel({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-white/9 bg-[#0d1d17]/92 shadow-[0_18px_45px_rgba(0,0,0,0.16)]",
+        "rounded-[1.35rem] border border-[#d9d5cb] bg-[#fffdf8] shadow-[0_14px_36px_rgba(37,43,52,0.07)]",
         className,
       )}
       {...props}

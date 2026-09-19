@@ -16,12 +16,12 @@ export function Button({
     <button
       type={type}
       className={cn(
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition duration-200 outline-none focus-visible:ring-2 focus-visible:ring-lime-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a1613] disabled:cursor-not-allowed disabled:opacity-55",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-bold transition duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[#2855d9] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f2efe7] disabled:cursor-not-allowed disabled:opacity-55",
         tone === "primary" &&
-          "bg-lime-300 text-[#0b1814] shadow-[0_8px_24px_rgba(190,242,100,0.18)] hover:-translate-y-0.5 hover:bg-lime-200",
+          "bg-[#2855d9] text-white shadow-[0_8px_24px_rgba(40,85,217,0.18)] hover:-translate-y-0.5 hover:bg-[#1f48c4]",
         tone === "secondary" &&
-          "border border-white/12 bg-white/7 text-white hover:bg-white/12",
-        tone === "ghost" && "text-white/70 hover:bg-white/8 hover:text-white",
+          "border border-[#cbc6ba] bg-[#fffdf8] text-[#17202a] hover:border-[#9d978a] hover:bg-white",
+        tone === "ghost" && "text-[#58636f] hover:bg-[#e6e2d8] hover:text-[#17202a]",
         className,
       )}
       {...props}

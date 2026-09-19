@@ -17,18 +17,18 @@ export default function ErrorPage({
   }, [error]);
 
   return (
-    <main className="grid min-h-dvh place-items-center bg-[#07110e] px-5 text-white">
-      <section className="max-w-md rounded-2xl border border-white/10 bg-[#0d1d17] p-7">
-        <span className="flex size-11 items-center justify-center rounded-xl bg-amber-300/12 text-amber-200">
+    <main className="grid min-h-dvh place-items-center bg-[#f2efe7] px-5 text-[#17202a]">
+      <section className="max-w-md rounded-[1.5rem] border border-[#d9d5cb] bg-[#fffdf8] p-7 shadow-[0_20px_50px_rgba(37,43,52,0.08)]">
+        <span className="flex size-11 items-center justify-center rounded-full bg-[#fff0e6] text-[#b55423]">
           <AlertTriangle className="size-5" aria-hidden="true" />
         </span>
-        <p className="font-score mt-8 text-xs font-bold tracking-[0.16em] text-amber-200 uppercase">
-          Data feed unavailable
+        <p className="mt-8 text-xs font-extrabold tracking-[0.04em] text-[#b55423]">
+          DATA FEED UNAVAILABLE
         </p>
-        <h1 className="font-display mt-2 text-4xl font-black">
-          The matchup board is offline.
+        <h1 className="font-display mt-2 text-4xl font-semibold tracking-[-0.025em]">
+          The decision desk is offline.
         </h1>
-        <p className="mt-4 text-sm leading-6 text-white/50">
+        <p className="mt-4 text-sm leading-6 text-[#65707a]">
           Check the Sleeper configuration and try again. The dashboard will
           never replace missing data with invented recommendations.
         </p>

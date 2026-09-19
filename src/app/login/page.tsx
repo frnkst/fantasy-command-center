@@ -19,38 +19,33 @@ export default async function LoginPage({
   const { error } = await searchParams;
 
   return (
-    <main className="relative grid min-h-dvh place-items-center overflow-hidden bg-[#07110e] px-5 py-10 text-white">
-      <div className="field-grid absolute inset-0 opacity-30" aria-hidden="true" />
-      <div className="absolute top-[-16rem] left-1/2 h-[34rem] w-[50rem] -translate-x-1/2 rounded-full bg-lime-300/10 blur-3xl" />
-      <section className="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-[#0e1d18]/92 p-7 shadow-[0_35px_90px_rgba(0,0,0,0.5)] sm:p-9">
+    <main className="relative grid min-h-dvh place-items-center overflow-hidden bg-[#f2efe7] px-5 py-10 text-[#17202a]">
+      <div className="field-grid absolute inset-0 opacity-70" aria-hidden="true" />
+      <div className="absolute top-[-16rem] left-1/2 h-[34rem] w-[50rem] -translate-x-1/2 rounded-full bg-[#dce4ff] blur-3xl" />
+      <section className="relative w-full max-w-md overflow-hidden rounded-[1.75rem] border border-[#d7d2c7] bg-[#fffdf8]/95 p-7 shadow-[0_32px_80px_rgba(44,49,57,0.13)] sm:p-9">
         <div className="mb-16 flex items-center justify-between">
-          <div className="flex size-12 items-center justify-center rounded-2xl border border-lime-200/30 bg-lime-300 text-[#0a1713]">
+          <div className="flex size-12 items-center justify-center rounded-full bg-[#17202a] text-white">
             <Activity className="size-6" aria-hidden="true" />
           </div>
-          <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em] text-white/45 uppercase">
-            <Shield01 className="size-4 text-lime-300" aria-hidden="true" />
+          <div className="flex items-center gap-2 text-xs font-bold text-[#68727d]">
+            <Shield01 className="size-4 text-[#2855d9]" aria-hidden="true" />
             Private access
           </div>
         </div>
 
-        <p className="font-score text-sm font-bold tracking-[0.22em] text-lime-300 uppercase">
-          Fantasy command center
+        <p className="text-xs font-extrabold tracking-[0.06em] text-[#2855d9]">
+          FANTASY COMMAND CENTER
         </p>
-        <h1 className="font-display mt-4 text-5xl leading-[0.93] font-black tracking-[-0.04em] sm:text-6xl">
-          Win the week
-          <br />
-          before kickoff.
+        <h1 className="font-display mt-4 text-5xl leading-[0.95] font-semibold tracking-[-0.04em] sm:text-6xl">
+          Your smartest week starts here.
         </h1>
-        <p className="mt-5 max-w-sm text-[0.95rem] leading-6 text-white/58">
-          Your private matchup room for sharper starts, better waiver moves,
-          and trades that make sense for both sides.
+        <p className="mt-5 max-w-sm text-[0.95rem] leading-6 text-[#65707a]">
+          A private decision desk for sharper starts, timely waiver moves, and
+          trades grounded in your actual league.
         </p>
 
         {error ? (
-          <p
-            className="mt-6 rounded-xl border border-red-300/20 bg-red-400/10 px-4 py-3 text-sm text-red-100"
-            role="alert"
-          >
+          <p className="mt-6 rounded-xl border border-[#e7b8bb] bg-[#fcebec] px-4 py-3 text-sm text-[#96323a]" role="alert">
             {error}
           </p>
         ) : null}
@@ -58,12 +53,12 @@ export default async function LoginPage({
         <form action={signIn} className="mt-9">
           <label
             htmlFor="password"
-            className="font-score mb-2 block text-[0.65rem] font-bold tracking-[0.14em] text-white/45 uppercase"
+            className="mb-2 block text-xs font-bold text-[#626d78]"
           >
             Master password
           </label>
-          <div className="mb-3 flex items-center rounded-xl border border-white/12 bg-black/16 px-4 focus-within:border-lime-300/60 focus-within:ring-2 focus-within:ring-lime-300/15">
-            <Lock01 className="size-4 shrink-0 text-white/35" aria-hidden="true" />
+          <div className="mb-3 flex items-center rounded-xl border border-[#cbc6ba] bg-white px-4 focus-within:border-[#2855d9] focus-within:ring-2 focus-within:ring-[#2855d9]/15">
+            <Lock01 className="size-4 shrink-0 text-[#7a838c]" aria-hidden="true" />
             <input
               id="password"
               name="password"
@@ -71,14 +66,14 @@ export default async function LoginPage({
               autoComplete="current-password"
               required
               autoFocus
-              className="h-12 min-w-0 flex-1 bg-transparent px-3 text-sm text-white outline-none placeholder:text-white/25"
+              className="h-12 min-w-0 flex-1 bg-transparent px-3 text-sm text-[#17202a] outline-none placeholder:text-[#9aa1a9]"
               placeholder="Enter your password"
             />
           </div>
           <LoginButton />
         </form>
 
-        <p className="mt-5 text-center text-xs leading-5 text-white/35">
+        <p className="mt-5 text-center text-xs leading-5 text-[#7a838c]">
           The password stays on the server and is never stored in the browser.
         </p>
       </section>
